@@ -155,6 +155,11 @@ export default function App() {
     if (savedResume) {
       try { setResumeData(JSON.parse(savedResume)); } catch {}
     }
+
+    // Auto-detect env API key to avoid confusing the user
+    if (process.env.API_KEY && process.env.API_KEY.length > 0) {
+      setHasPaidKey(true);
+    }
     
     setIsInitializing(false);
   };
