@@ -1,4 +1,3 @@
-
 import { 
   Upload, Download, Play, Pause, AlertCircle, CheckCircle2, 
   Settings, Sliders, Tags, Loader2, Clock, CircleDot, 
@@ -80,6 +79,7 @@ export interface UsageStats {
 
 // --- Constants ---
 
+export const STORAGE_KEY_API = 'lit-trans-api-key';
 export const AVAILABLE_TAGS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'div', 'span', 'em', 'strong'];
 export const DEFAULT_TAGS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'div'];
 
@@ -101,7 +101,7 @@ export const LANG_CODE_TO_LABEL: Record<string, string> = {
 };
 
 export const AI_MODELS = [
-    { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite', desc: 'Free (24/7)', locked: false },
+    { id: 'gemini-flash-lite-latest', name: 'Gemini 2.0 Flash Lite', desc: 'Best for Free Tier', locked: false },
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', desc: 'Balanced', locked: true }, // Status depends on key
     { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', desc: 'Expert', locked: true }        // Status depends on key
 ];
