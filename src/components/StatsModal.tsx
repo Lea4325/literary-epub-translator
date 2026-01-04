@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { BookStats, UILanguage } from '../design';
-import { BookStrategy } from '../services/geminiService';
+import { BookStats, UILanguage, BookStrategy } from '../design';
 import { 
   BarChart3, Clock, Check, X, AlertCircle, BookOpen, 
   AlignLeft, Gauge, Zap, BrainCircuit, RefreshCw, MessageSquare

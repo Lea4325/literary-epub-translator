@@ -1,21 +1,7 @@
 import JSZip from 'jszip';
-import { GeminiTranslator, BookStrategy } from './geminiService';
-import { UILanguage, TranslationSettings, ResumeInfo, BookStats } from '../design';
+import { GeminiTranslator } from './geminiService';
+import { UILanguage, TranslationSettings, ResumeInfo, BookStats, LogEntry, UsageStats, BookStrategy } from '../design';
 import { STRINGS_LOGS } from '../lang/logs';
-
-export interface LogEntry {
-  timestamp: string;
-  text: string;
-  type?: 'info' | 'success' | 'warning' | 'error' | 'live';
-}
-
-export interface UsageStats {
-  promptTokens: number;
-  candidatesTokens: number;
-  totalTokens: number;
-}
-
-export { TranslationSettings, ResumeInfo };
 
 export interface TranslationProgress {
   currentFile: number;

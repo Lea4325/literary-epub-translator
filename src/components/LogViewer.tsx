@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { LogEntry } from '../services/epubService';
+import { LogEntry } from '../design';
 import { Check, AlertCircle, Info, Activity, Clock, Terminal } from 'lucide-react';
 
 interface LogViewerProps {

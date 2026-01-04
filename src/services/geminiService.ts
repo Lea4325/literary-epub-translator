@@ -1,20 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { UILanguage } from "../design";
-import { UsageStats } from "./epubService";
+import { UILanguage, UsageStats, BookStrategy } from "../design";
 import { getSystemInstruction, getAnalysisPrompt } from "../prompts";
-
-export interface BookStrategy {
-  genre_en: string;
-  tone_en: string;
-  author_style_en: string;
-  strategy_en: string;
-  genre_translated: string;
-  tone_translated: string;
-  author_style_translated: string;
-  strategy_translated: string;
-  literary_fidelity_note: string;
-  detected_creativity_level: number;
-}
 
 export class GeminiTranslator {
   private modelName: string;

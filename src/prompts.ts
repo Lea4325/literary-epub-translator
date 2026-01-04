@@ -1,4 +1,4 @@
-import { BookStrategy } from "./services/geminiService";
+import { BookStrategy } from "./design";
 
 /**
  * Kitap analizi için kullanılan ana komut.

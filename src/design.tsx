@@ -52,6 +52,31 @@ export interface BookStats {
   estimatedDurationPro: number; // Dakika cinsinden (Best case)
 }
 
+export interface BookStrategy {
+  genre_en: string;
+  tone_en: string;
+  author_style_en: string;
+  strategy_en: string;
+  genre_translated: string;
+  tone_translated: string;
+  author_style_translated: string;
+  strategy_translated: string;
+  literary_fidelity_note: string;
+  detected_creativity_level: number;
+}
+
+export interface LogEntry {
+  timestamp: string;
+  text: string;
+  type?: 'info' | 'success' | 'warning' | 'error' | 'live';
+}
+
+export interface UsageStats {
+  promptTokens: number;
+  candidatesTokens: number;
+  totalTokens: number;
+}
+
 // --- Constants ---
 
 export const AVAILABLE_TAGS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'div', 'span', 'em', 'strong'];
