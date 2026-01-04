@@ -32,7 +32,7 @@ export default defineConfig({
     })
   ],
   root: './',
-  base: 'root: './',', 
+  base: './', 
   build: {
     outDir: 'dist',
     sourcemap: false
