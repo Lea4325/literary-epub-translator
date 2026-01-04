@@ -28,7 +28,9 @@ export class GeminiTranslator {
   }
 
   private getApiKey(): string {
-    return (window as any).manualApiKey || process.env.API_KEY || "";
+    // SDK boş string kabul etmediği için, eğer anahtar yoksa placeholder dönüyoruz.
+    // Bu sayede 'client-side' çökme yerine API'den dönen hatayı yakalayabiliriz.
+    return (window as any).manualApiKey || process.env.API_KEY || "AI_BROWSER_PLACEHOLDER_KEY";
   }
 
   setStrategy(strategy: BookStrategy) {
@@ -71,7 +73,6 @@ export class GeminiTranslator {
 
   async analyzeBook(metadata: any, coverInfo?: { data: string, mimeType: string }, uiLang: UILanguage = 'en', feedback?: string): Promise<BookStrategy> {
     const apiKey = this.getApiKey();
-    // Not: API Key boş olsa bile başlatmayı dene. Kullanıcı isteği üzerine kontrol kaldırıldı.
     
     const ai = new GoogleGenAI({ apiKey });
     const prompt = getAnalysisPrompt(this.sourceLanguage, this.targetLanguage, metadata, uiLang, feedback);
@@ -137,7 +138,6 @@ export class GeminiTranslator {
     }
 
     const apiKey = this.getApiKey();
-    // Not: API Key boş olsa bile başlatmayı dene. Kullanıcı isteği üzerine kontrol kaldırıldı.
 
     const ai = new GoogleGenAI({ apiKey });
     
@@ -180,6 +180,10 @@ export class GeminiTranslator {
     } catch (error: any) {
       if (error.message?.includes('429')) {
         throw new Error("API_QUOTA_EXCEEDED");
+      }
+      // API Key hatalarını daha temiz loglamak için (Placeholder key durumu)
+      if (error.message?.includes('API key') || error.message?.includes('400')) {
+          console.warn("API Key Error:", error);
       }
       throw error;
     }
