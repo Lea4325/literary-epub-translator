@@ -28,8 +28,12 @@ export const StatsModal: React.FC<StatsModalProps> = ({
   const t = STRINGS_UI[uiLang] || STRINGS_UI['en'];
   
   const fmt = (n: number) => n.toLocaleString(uiLang === 'tr' ? 'tr-TR' : 'en-US');
+  
+  // Anahtar varsa kısa süreyi, yoksa uzun süreyi göster
   const duration = hasPaidKey ? stats.estimatedDurationPro : stats.estimatedDurationFree;
-  const isHighLoad = stats.estimatedDurationFree > 30;
+  
+  // Eğer anahtar yoksa ve süre 5 dakikadan uzunsa uyarı ver (Flash Lite için 30dk çok uzun bir sınır olabilir, 5dk makul bir eşik)
+  const isHighLoad = !hasPaidKey && stats.estimatedDurationFree > 5;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-scale">
@@ -77,27 +81,31 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                           <span className="text-lg font-black text-slate-700 dark:text-slate-200">{fmt(stats.estimatedChunks)}</span>
                           <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">{t.statRequests}</span>
                       </div>
-                      <div className="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 flex flex-col items-center justify-center gap-1 text-center">
-                          <Clock size={20} className="text-indigo-500 mb-1"/>
-                          <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">~{duration}m</span>
-                          <span className="text-[9px] font-black uppercase text-indigo-400/70 tracking-wider">{t.statDuration}</span>
+                      <div className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-1 text-center transition-colors ${hasPaidKey ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30'}`}>
+                          <Clock size={20} className={hasPaidKey ? "text-green-500 mb-1" : "text-amber-500 mb-1"}/>
+                          <span className={`text-lg font-black ${hasPaidKey ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>~{duration}m</span>
+                          <span className={`text-[9px] font-black uppercase tracking-wider ${hasPaidKey ? 'text-green-400/70' : 'text-amber-400/70'}`}>{t.statDuration}</span>
                       </div>
                   </div>
 
-                  {!hasPaidKey && isHighLoad ? (
-                      <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/30 flex gap-4">
+                  {isHighLoad ? (
+                      <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/30 flex gap-4 animate-pulse-slow">
                           <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl h-fit text-amber-600"><AlertCircle size={20}/></div>
                           <div className="space-y-1">
                               <h4 className="font-bold text-amber-700 dark:text-amber-400 text-sm uppercase">{t.statHighLoadTitle}</h4>
-                              <p className="text-xs text-amber-800/80 dark:text-amber-200/60 leading-relaxed text-justify">{t.statHighLoadDesc}</p>
+                              <p className="text-xs text-amber-800/80 dark:text-amber-200/60 leading-relaxed text-justify mb-2">{t.statHighLoadDesc}</p>
+                              {/* Teşvik Mesajı */}
+                              <div className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/20 px-3 py-2 rounded-lg inline-block border border-amber-200/50 dark:border-amber-800/30">
+                                 💡 TIP: Add your own API Key to speed this up by ~4x!
+                              </div>
                           </div>
                       </div>
                   ) : (
-                      <div className="p-5 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-700/30 flex gap-4 items-center">
-                          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl h-fit text-indigo-600"><Zap size={20}/></div>
+                      <div className={`p-5 rounded-2xl border flex gap-4 items-center ${hasPaidKey ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-700/30' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+                          <div className={`p-2 rounded-xl h-fit ${hasPaidKey ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}><Zap size={20}/></div>
                           <div>
-                              <h4 className="font-bold text-indigo-700 dark:text-indigo-400 text-sm uppercase">{t.statReady}</h4>
-                              <p className="text-xs text-indigo-800/80 dark:text-indigo-200/60">{hasPaidKey ? t.statPaidInfo : t.statFreeInfo}</p>
+                              <h4 className={`font-bold text-sm uppercase ${hasPaidKey ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>{t.statReady}</h4>
+                              <p className={`text-xs ${hasPaidKey ? 'text-indigo-800/80 dark:text-indigo-200/60' : 'text-slate-500 dark:text-slate-400'}`}>{hasPaidKey ? t.statPaidInfo : t.statFreeInfo}</p>
                           </div>
                       </div>
                   )}
