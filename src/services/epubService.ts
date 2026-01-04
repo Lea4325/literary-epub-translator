@@ -25,7 +25,7 @@ function getLogStr(uiLang: string, key: string): string {
 }
 
 // İstatistik Hesaplama Fonksiyonu
-export async function calculateEpubStats(file: File, targetTags: string[]): Promise<BookStats> {
+export async function calculateEpubStats(file: File, targetTags: string[], hasUserKey: boolean): Promise<BookStats> {
   const epubBuffer = await file.arrayBuffer();
   const epubZip = await new JSZip().loadAsync(epubBuffer);
   const parser = new DOMParser();
@@ -79,25 +79,28 @@ export async function calculateEpubStats(file: File, targetTags: string[]): Prom
 
   // Tahminler
   // 1 Token ~= 4 Char
-  const estimatedTokens = Math.ceil(totalChars / 3.5); // Biraz güvenlik payı
+  const estimatedTokens = Math.ceil(totalChars / 3.5); 
   
-  // Bir chunk ortalama 2000 karakter civarında gönderilir (sistemin parçalama mantığına göre değişir ama ortalama bu)
-  // Veya her düğüm ayrı çevriliyorsa düğüm sayısı daha önemli olabilir. 
-  // Burada "istek sayısı"nı tahmin etmeye çalışıyoruz.
-  // Gemini'ye her paragraf ayrı gidiyor varsayımıyla (mevcut kodda node-by-node):
-  // Ortalama bir paragraf 300 karakter desek:
-  const estimatedChunks = Math.ceil(totalChars / 400); 
+  // Tahmini İstek Sayısı (Chunk)
+  // Gemini'ye her paragraf/node ayrı gidiyor varsayımıyla veya birleştirilmiş chunklar:
+  // Ortalama chunk büyüklüğü ~500 karakter diyelim (Daha güvenli bir tahmin)
+  const estimatedChunks = Math.ceil(totalChars / 500); 
 
   // Süre Hesaplaması
-  // Free Tier: 15 RPM (Dakikada 15 istek).
-  // Paid Tier: Latency based (~3 sn/istek).
   
-  // Free: İstek sayısı / 15 + (İşlem süresi)
-  const durationFree = Math.ceil(estimatedChunks / 12); // Dakika (RPM limitine takılacağı için)
+  // 1. FREE MODE (Anahtarsız):
+  // Google Gemini Free Tier Limitleri: 15 RPM (Dakikada 15 istek).
+  // Bu durumda her 4 saniyede 1 istek atabiliriz.
+  // Ek olarak latency süresi var.
+  // Süre (dk) = (Chunk Sayısı / 15)
+  const durationFree = Math.ceil(estimatedChunks / 15); 
   
-  // Pro: Paralel işlem yoksa seri ilerler.
-  // Ortalama 2-3 saniye sürse bir istek.
-  const durationPro = Math.ceil((estimatedChunks * 2.5) / 60); // Dakika
+  // 2. PAID/KEY MODE (Anahtarlı):
+  // Kişisel API Key limitleri çok daha yüksektir (örn: 2000 RPM).
+  // Burada sınırlayıcı faktör ağ gecikmesi ve modelin üretim hızıdır.
+  // Ortalama bir istek 1.5 - 2 saniye sürer.
+  // Dakikada yaklaşık 30-40 istek işlenebilir (paralel olmasa bile).
+  const durationPro = Math.ceil(estimatedChunks / 30); 
 
   return {
     totalChars,
@@ -105,7 +108,9 @@ export async function calculateEpubStats(file: File, targetTags: string[]): Prom
     totalSentences,
     estimatedTokens,
     estimatedChunks,
-    estimatedDurationFree: Math.max(1, durationFree),
+    // Eğer kullanıcının anahtarı yoksa (hasUserKey = false), "tahmini süre" olarak uzun olanı göster.
+    // Eğer varsa kısa olanı göster. Ancak biz burada ham verileri dönüyoruz, UI karar verecek.
+    estimatedDurationFree: Math.max(1, durationFree), 
     estimatedDurationPro: Math.max(1, durationPro)
   };
 }
@@ -273,11 +278,14 @@ export async function processEpub(
                 }
             } else if (err.message === "API_QUOTA_EXCEEDED" || err.message?.includes('429')) {
               addLog(getLogStr(ui, 'quotaExceeded'), 'warning');
+              // KOTA AŞIMI BEKLEMESİ (Rate Limit Backoff)
+              // Ücretsiz modda 15 RPM = 60/15 = 4sn. Ancak güvenli olması için biraz daha uzun beklenebilir.
+              // Eğer hata aldıysak, Google bizi bloklamış demektir, 60s beklemek en güvenlisidir.
               await new Promise(r => {
                 const timeout = setTimeout(r, 65000);
                 signal.addEventListener('abort', () => clearTimeout(timeout));
               });
-              nodeIdx--; continue;
+              nodeIdx--; continue; // Düğümü tekrar dene
             } else {
                 console.error("Critical node translation error:", err);
                 node.innerHTML = original;
