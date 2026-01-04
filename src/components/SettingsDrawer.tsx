@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Settings, X, LayoutDashboard, Sun, Moon, Globe, Key, Lock, Unlock, Zap, 
-  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, Smartphone, Download, ExternalLink
+  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, ExternalLink
 } from 'lucide-react';
 import { TranslationSettings, AI_MODELS, UILanguage } from '../design';
 
@@ -21,12 +21,6 @@ interface SettingsDrawerProps {
   isVerifying: boolean;
   onVerifyKey: () => void;
   onConnectAiStudio: () => void;
-  
-  // PWA Props
-  isInstallable: boolean;
-  isAppInstalled: boolean;
-  installApp: () => void;
-  isIOS: boolean;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -44,11 +38,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   setManualKey,
   isVerifying,
   onVerifyKey,
-  onConnectAiStudio,
-  isInstallable,
-  isAppInstalled,
-  installApp,
-  isIOS
+  onConnectAiStudio
 }) => {
   const [showKey, setShowKey] = useState(false);
 
@@ -73,35 +63,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
           
-          {/* PWA Section - Always visible now */}
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-4 rounded-3xl shadow-lg text-white relative overflow-hidden group">
-              <div className="relative z-10 flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                      <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm"><Smartphone size={18} /></div>
-                      <span className="text-xs font-black uppercase tracking-wider">{t.installApp}</span>
-                  </div>
-
-                  {isInstallable ? (
-                      <button 
-                      onClick={installApp}
-                      className="w-full py-3 bg-white text-indigo-600 rounded-xl font-black text-[11px] uppercase shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
-                      >
-                      <Download size={14}/> {t.installBtn}
-                      </button>
-                  ) : isAppInstalled ? (
-                      <div className="w-full py-3 bg-white/20 text-white rounded-xl font-black text-[11px] uppercase flex items-center justify-center gap-2 cursor-default border border-white/30">
-                          <Check size={14} /> {t.appInstalled || "INSTALLED"}
-                      </div>
-                  ) : (
-                      <div className="text-[10px] text-white/80 leading-snug bg-black/20 p-3 rounded-xl border border-white/10">
-                          {isIOS ? t.pwaIOS : t.pwaBrowser}
-                      </div>
-                  )}
-              </div>
-              {/* Decorative Icon */}
-              <Smartphone size={100} className="absolute -bottom-4 -right-4 text-white/10 rotate-12 group-hover:scale-110 transition-transform"/>
-          </div>
-
           {/* Interface Settings */}
           <div className="space-y-4">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
