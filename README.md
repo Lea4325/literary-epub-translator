@@ -1,16 +1,77 @@
-📖 Literary EPUB TranslatorGoogle Gemini 1.5 Flash Destekli, Tarayıcı Tabanlı Edebi Çeviri AracıA Serverless, Browser-Based Literary Translation Tool Powered by Google Gemini 1.5 Flash🇹🇷 Türkçe (Turkish)🌟 Genel BakışLiterary EPUB Translator, sıradan makine çevirisinin ötesine geçerek, edebi eserlerin ruhunu, yazarın üslubunu ve metnin duygusunu koruyarak çeviri yapmak için tasarlanmış gelişmiş bir web uygulamasıdır. Standart çeviri araçlarının aksine, bu proje "Üslup Aktarımı" (Style Transfer) üzerine odaklanır; yani çıktı robotik değil, profesyonel bir kitap gibi okunur.Uygulama tamamen İstemci Taraflı (Client-Side) çalışır. Dosyalarınız ve API anahtarınız asla bir sunucuya gönderilmez, doğrudan tarayıcınızdan Google sunucularıyla iletişim kurar. Bu sayede maksimum güvenlik ve gizlilik sağlar.✨ Temel Özellikler🧠 Edebi Üslup Analizi: Çeviriye başlamadan önce yapay zeka kitabı analiz eder; yazarın ses tonunu (melankolik, iğneleyici, coşkulu vb.) ve türünü tespit ederek çeviriyi buna göre uyarlar.🛡️ Yapısal Koruma: EPUB dosyasının orijinal yapısını (HTML etiketleri, CSS sınıfları, italik/kalın yazılar, bölüm ayrımları) akıllıca ayrıştırır ve korur.⚡ Tamamen Sunucusuz Mimari: React, TypeScript ve Vite ile geliştirilmiştir. Python, Colab veya harici bir backend sunucusu gerektirmez.🚀 Canlı Takip: İşlem sırasında çeviri loglarını, ilerleme durumunu ve tahmini süreyi gösteren yapışkan (sticky) bir durum çubuğu sunar.🔒 Güvenli ve Özel: API Anahtarınız sadece tarayıcınızın yerel hafızasında tutulur.🇬🇧 English🌟 OverviewLiterary EPUB Translator is a sophisticated web application designed to translate EPUB books while preserving their literary style, tone, and formatting. Unlike standard machine translation tools, this project focuses on "Style Transfer", ensuring that the translated text reads like a professionally written book rather than a robotic output.The application runs entirely Client-Side (in your browser) using React and Vite. It communicates directly with the Google Gemini API, meaning your files and API keys never touch a backend server, ensuring maximum privacy and security.✨ Key Features🧠 Literary Style Analysis: Before translation, the AI analyzes the book's content to detect the author's voice, narrative tone (e.g., melancholic, sarcastic, enthusiastic), and genre, adapting the translation style accordingly.🛡️ Structure Preservation: Uses intelligent parsing to keep the original EPUB structure (HTML tags, CSS classes, italics, bold text, and chapter divisions) intact.⚡ Pure Client-Side Architecture: Built with React, TypeScript, and Vite. Requires NO Python, NO Colab, and NO external backend server.🚀 Real-Time Progress: Features a sticky status bar, live translation logs, and a visual progress bar to track the process chapter by chapter.🔒 Secure & Private: Your Google API Key is stored only in your browser's local memory/storage and is used directly for requests to Google's servers.🛠️ Tech Stack (Teknoloji Yığını)Core: React 18, TypeScript, ViteStyling: Tailwind CSS, Lucide React (Icons)AI Integration: Google Gemini 1.5 Flash (via @google/generative-ai)File Processing: JSZip (for EPUB parsing)📂 Project Structure (Proje Yapısı)literary-epub-translator/
-├── public/              # Static assets
-├── src/
-│   ├── components/      # UI Components (ProgressBar, LogViewer, etc.)
-│   ├── services/        # Logic for EPUB parsing and Gemini API
-│   ├── App.tsx          # Main application logic
-│   └── main.tsx         # Entry point
-├── index.html           # HTML template
-├── vite.config.ts       # Vite configuration
-└── package.json         # Dependencies
-🚀 Getting Started (Kurulum)Prerequisites (Gereksinimler)A Google Gemini API Key (Get it for free from Google AI Studio).Node.js installed on your machine (for local development).Installation (Local)Clone the repository:git clone [https://github.com/EnesMCLK/literary-epub-translator.git](https://github.com/EnesMCLK/literary-epub-translator.git)
-cd literary-epub-translator
-Install dependencies:npm install
-Run the development server:npm run dev
-Open http://localhost:5173 in your browser.Deployment (Yayınlama)This project is optimized for static hosting providers like Cloudflare Pages or GitHub Pages.Build the project:npm run build
-Deploy: Upload the contents of the dist folder to your hosting provider.⚠️ Disclaimer (Yasal Uyarı)This tool utilizes the Google Gemini API. Please be aware of Google's API usage policies regarding data privacy, especially when using the free tier. The application is intended for personal use and educational purposes.🤝 Contributing (Katkıda Bulunma)Contributions are welcome! Feel free to submit a Pull Request or open an Issue if you have suggestions for improvements (e.g., new languages, batch processing).License: MIT License.
+# 📖 Literary EPUB Translator
+
+<div align="center">
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
+![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=flat-square&logo=typescript&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/Google-Gemini_AI-8E75B2.svg?style=flat-square&logo=google&logoColor=white)
+
+**A professional, client-side book translation engine powered by Google Gemini.**  
+*Translates EPUBs while preserving literary style, author's voice, and formatting.*
+
+[Features](#-key-features) •
+[How It Works](#-how-it-works) •
+[Tech Stack](#-tech-stack)
+
+</div>
+
+---
+
+## 🚀 Overview
+
+**Literary EPUB Translator** is a sophisticated Single Page Application (SPA) designed to bridge the gap between machine translation and literary art. Unlike standard translators that often produce robotic or literal output, this tool analyzes the book's genre, tone, and author's style before translation begins.
+
+It runs entirely in your browser using **Google Gemini API**. No file is ever uploaded to a backend server, ensuring privacy and speed.
+
+## ✨ Key Features
+
+### 🧠 AI-Powered Analysis
+*   **Style Detection:** Before translating, the AI analyzes the book to detect the genre (e.g., Satire, Noir), tone (e.g., Melancholic, Witty), and writing style.
+*   **Adaptive Strategy:** Automatically adjusts the "Temperature" (creativity) of the model based on the complexity of the text.
+*   **Context Awareness:** Preserves the author's voice across chapters.
+
+### 🛡️ Privacy & Security
+*   **Client-Side Processing:** All EPUB parsing (`JSZip`) and regeneration happen locally in your browser.
+*   **Direct API Calls:** Your API key is used directly to communicate with Google's servers; no middleman.
+
+### ⚡ Performance & UX
+*   **Streaming Translation:** Watch the translation happen in real-time with a terminal-like System Monitor.
+*   **Resumable Sessions:** translation interrupted? The app saves your progress locally. Pick up exactly where you left off.
+*   **PWA Support:** Installable as a native app on iOS, Android, and Desktop.
+*   **Smart Quota Management:** Handles API rate limits (429 errors) gracefully with auto-wait and retry logic.
+
+### 🎨 Modern UI
+*   **Glassmorphism Design:** Built with Tailwind CSS for a sleek, dark-mode compatible interface.
+*   **Internationalization:** Fully localized UI (English, Turkish, French, German, Spanish, Japanese, and more).
+*   **Stats Dashboard:** View estimated costs (tokens), duration, and word counts before you start.
+
+## ⚙️ How It Works
+
+1.  **Parsing:** The app unzips the `.epub` file and identifies HTML/XHTML content nodes.
+2.  **Analysis:** It sends metadata (Title, Author) to Gemini to formulate a "Translation Strategy".
+3.  **Chunking:** Text is broken down into semantic chunks to fit within AI context windows.
+4.  **Translation:** Each chunk is translated using the strategy, preserving HTML tags (`<em>`, `<strong>`, etc.).
+5.  **Reassembly:** The translated HTML is injected back into the EPUB structure.
+6.  **Download:** A new, valid EPUB file is generated for download.
+
+## 🛠️ Tech Stack
+
+*   **Framework:** React 19 (Vite)
+*   **Language:** TypeScript
+*   **AI Integration:** `@google/genai` SDK
+*   **Styling:** Tailwind CSS + Lucide React (Icons)
+*   **File Handling:** `jszip`
+*   **State Management:** React Hooks + LocalStorage
+*   **PWA:** `vite-plugin-pwa`
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by <a href="https://github.com/EnesMCLK">EnesMCLK</a></p>
+</div>
