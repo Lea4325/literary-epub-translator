@@ -71,8 +71,8 @@ export class GeminiTranslator {
 
   async analyzeBook(metadata: any, coverInfo?: { data: string, mimeType: string }, uiLang: UILanguage = 'en', feedback?: string): Promise<BookStrategy> {
     const apiKey = this.getApiKey();
-    if (!apiKey) throw new Error("API_KEY_MISSING");
-
+    // Not: API Key boş olsa bile başlatmayı dene. Kullanıcı isteği üzerine kontrol kaldırıldı.
+    
     const ai = new GoogleGenAI({ apiKey });
     const prompt = getAnalysisPrompt(this.sourceLanguage, this.targetLanguage, metadata, uiLang, feedback);
 
@@ -137,7 +137,7 @@ export class GeminiTranslator {
     }
 
     const apiKey = this.getApiKey();
-    if (!apiKey) throw new Error("API_KEY_MISSING");
+    // Not: API Key boş olsa bile başlatmayı dene. Kullanıcı isteği üzerine kontrol kaldırıldı.
 
     const ai = new GoogleGenAI({ apiKey });
     
