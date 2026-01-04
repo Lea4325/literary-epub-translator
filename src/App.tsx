@@ -15,7 +15,7 @@ import { DownloadActions } from './components/DownloadActions';
 import { StatsModal } from './components/StatsModal';
 import { 
     UILanguage, TranslationSettings, HistoryItem, 
-    LANGUAGES_DATA, DEFAULT_TAGS, LANG_CODE_TO_LABEL, AI_MODELS, BookStats 
+    LANGUAGES_DATA, DEFAULT_TAGS, LANG_CODE_TO_LABEL, AI_MODELS, BookStats, STORAGE_KEY_API 
 } from './design';
 import { STRINGS_UI } from './lang/ui';
 
@@ -102,50 +102,34 @@ export default function App() {
   // IP Tabanlı Dil Algılama
   const detectLanguageFromIP = async (): Promise<UILanguage | null> => {
     try {
-      // 1.5 saniyelik bir zaman aşımı koyuyoruz, API yavaşsa beklemeyelim
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 1500);
-
       const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
       clearTimeout(timeoutId);
-      
       const data = await response.json();
-      const countryCode = data.country_code; // 'TR', 'US' vb.
-      
+      const countryCode = data.country_code;
       if (countryCode && COUNTRY_TO_LANG[countryCode]) {
-        console.log(`Detected Country: ${countryCode} -> Language: ${COUNTRY_TO_LANG[countryCode]}`);
         return COUNTRY_TO_LANG[countryCode];
       }
-    } catch (e) {
-      console.warn("IP Geolocation failed or timed out, falling back to browser default.");
-    }
+    } catch (e) { }
     return null;
   };
 
   const initializeApp = async () => {
-    let langToUse: UILanguage = 'en'; // Varsayılan
+    let langToUse: UILanguage = 'en';
 
-    // 1. Önce LocalStorage kontrol et (Kullanıcı tercihi en öncelikli)
     const storedLang = localStorage.getItem('lit-trans-ui-lang') as UILanguage;
-    
     if (storedLang && STRINGS_UI[storedLang]) {
       langToUse = storedLang;
     } else {
-      // 2. LocalStorage boşsa IP kontrolü yap
       const ipLang = await detectLanguageFromIP();
       if (ipLang) {
         langToUse = ipLang;
       } else {
-         // 3. IP başarısızsa veya null dönerse Tarayıcı dilini kontrol et
          const browserLang = navigator.language.split('-')[0] as UILanguage;
-         // Desteklenen bir dil mi?
-         if (STRINGS_UI[browserLang]) {
-            langToUse = browserLang;
-            console.log(`Fallback to browser language: ${browserLang}`);
-         }
+         if (STRINGS_UI[browserLang]) langToUse = browserLang;
       }
     }
-    
     setUiLang(langToUse);
 
     const savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
@@ -156,9 +140,14 @@ export default function App() {
       try { setResumeData(JSON.parse(savedResume)); } catch {}
     }
 
-    // Auto-detect env API key to avoid confusing the user
-    if (process.env.API_KEY && process.env.API_KEY.length > 0) {
-      setHasPaidKey(true);
+    // --- KEY RESTORE LOGIC ---
+    // Önce LocalStorage'a bak
+    const localKey = localStorage.getItem(STORAGE_KEY_API);
+    if (localKey) {
+        setManualKey(localKey);
+        setHasPaidKey(true); // Basitlik için true varsayıyoruz, istek atınca belli olur
+    } else if (process.env.API_KEY && process.env.API_KEY.length > 0) {
+        setHasPaidKey(true);
     }
     
     setIsInitializing(false);
@@ -172,11 +161,15 @@ export default function App() {
     if (!keyToTest) { setIsVerifying(false); return; }
     try {
       const ai = new GoogleGenAI({ apiKey: keyToTest });
-      const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: 'ping' });
+      // DOĞRULAMA İÇİN LITE MODELİNİ KULLAN
+      // Böylece Free Tier kullanıcıları hata almaz
+      const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: 'ping' });
       if (response.text) {
         setHasPaidKey(true);
         window.manualApiKey = keyToTest;
-        setSettings(prev => ({ ...prev, modelId: 'gemini-3-flash-preview' }));
+        localStorage.setItem(STORAGE_KEY_API, keyToTest); // Anahtarı kaydet
+        // Varsayılan olarak Lite modeli seçili kalsın ki ücretsiz kullanıcılar sorun yaşamasın
+        setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
       }
     } catch {
       setHasPaidKey(false);
@@ -193,12 +186,16 @@ export default function App() {
     }
   };
 
+  const handleMissingKey = () => {
+     setIsRightDrawerOpen(true);
+     // Hata mesajı gösterme, sadece çekmeceyi aç
+     // Kullanıcı zaten "Free" seçili olduğunu görüyor ama anahtar alanı boş
+  };
+
   const handleAnalyzeAndStats = async () => {
     if (!file) return;
 
     const currentModel = AI_MODELS.find(m => m.id === settings.modelId);
-    
-    // Sadece kilitli modeller için ücretli anahtar zorunluluğu
     if (currentModel?.locked && !hasPaidKey) {
          setError({ title: t.error, message: t.billingInfo });
          setIsRightDrawerOpen(true);
@@ -210,18 +207,12 @@ export default function App() {
     setBookStats(null);
     
     try {
-      // 1. Paralel olarak AI analizi ve İstatistik Hesaplama yap
-      // hasPaidKey durumunu ilet, böylece kota/süre hesaplaması doğru yapılır
       const [strategy, stats] = await Promise.all([
           analyzeEpubOnly(file, { ...settings, uiLang }),
           calculateEpubStats(file, settings.targetTags, hasPaidKey)
       ]);
       
-      // 2. State Güncelle
-      setProgress(prev => ({
-        ...prev,
-        strategy: strategy
-      }));
+      setProgress(prev => ({ ...prev, strategy: strategy }));
       setAnalyzedModelId(settings.modelId || 'unknown');
       setBookStats(stats);
       
@@ -230,36 +221,35 @@ export default function App() {
         setIsCreativityOptimized(true);
       }
 
-      // 3. İstatistik Modalı Aç
       setIsStatsModalOpen(true);
 
     } catch (err: any) {
-      setError({ title: t.error, message: err.message || "Analysis failed" });
+      if (err.message === "MISSING_KEY_REDIRECT") {
+          handleMissingKey();
+      } else {
+          setError({ title: t.error, message: err.message || "Analysis failed" });
+      }
     } finally {
       setIsAnalyzing(false);
     }
   };
   
-  // Modal içinden tetiklenen yeniden analiz fonksiyonu (Geri bildirimli)
   const handleReAnalyzeWithFeedback = async (feedback: string) => {
     if (!file) return;
     setIsAnalyzing(true);
-    
     try {
-      // Sadece analizi tekrar çalıştır, istatistikleri koru
       const strategy = await analyzeEpubOnly(file, { ...settings, uiLang }, feedback);
-      
-      setProgress(prev => ({
-        ...prev,
-        strategy: strategy
-      }));
-      
+      setProgress(prev => ({ ...prev, strategy: strategy }));
       if (strategy && strategy.detected_creativity_level) {
         setSettings(s => ({ ...s, temperature: strategy.detected_creativity_level }));
         setIsCreativityOptimized(true);
       }
     } catch (err: any) {
-       setError({ title: t.error, message: err.message || "Re-analysis failed" });
+       if (err.message === "MISSING_KEY_REDIRECT") {
+          handleMissingKey();
+       } else {
+          setError({ title: t.error, message: err.message || "Re-analysis failed" });
+       }
     } finally {
       setIsAnalyzing(false);
     }
@@ -269,8 +259,6 @@ export default function App() {
     if (!file) return;
 
     const currentModel = AI_MODELS.find(m => m.id === settings.modelId);
-    
-    // Sadece kilitli modeller için ücretli anahtar zorunluluğu
     if (currentModel?.locked && !hasPaidKey) {
          setError({ title: t.error, message: t.billingInfo });
          setIsRightDrawerOpen(true);
@@ -279,7 +267,7 @@ export default function App() {
 
     setIsProcessing(true);
     setDownloadUrl(null);
-    setIsStatsModalOpen(false); // Modal kapalı olduğundan emin ol
+    setIsStatsModalOpen(false);
     
     abortControllerRef.current = new AbortController();
     try {
@@ -315,7 +303,9 @@ export default function App() {
       setResumeData(null);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        if (err.message?.includes('429') || err.message?.includes('quota')) {
+        if (err.message === "MISSING_KEY_REDIRECT") {
+            handleMissingKey();
+        } else if (err.message?.includes('429') || err.message?.includes('quota')) {
           setError({ title: t.error, message: t.quotaError });
         } else {
           setError({ title: t.error, message: err.message });
@@ -328,7 +318,6 @@ export default function App() {
     if (!progress.strategy) {
       handleAnalyzeAndStats();
     } else {
-      // Eğer zaten analiz yapılmışsa direkt modalı aç
       setIsStatsModalOpen(true);
     }
   };
@@ -376,7 +365,7 @@ export default function App() {
         onOpenLangModal={() => setIsLangModalOpen(true)}
         hasPaidKey={hasPaidKey}
         manualKey={manualKey}
-        setManualKey={setManualKey}
+        setManualKey={(k) => { setManualKey(k); localStorage.setItem(STORAGE_KEY_API, k); }}
         isVerifying={isVerifying}
         onVerifyKey={() => verifyApiKey()}
         onConnectAiStudio={handleConnectAiStudio}
