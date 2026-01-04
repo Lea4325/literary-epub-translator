@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, Play, AlertCircle, Loader2, Clock, 
   Sparkles, Shield, ChevronDown, RefreshCw, Settings as SettingsIcon,
-  BarChart3, Activity, StepForward, BrainCircuit, Check, X, Smartphone, Download
+  BarChart3, Activity, StepForward, BrainCircuit, Check, X
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { processEpub, analyzeEpubOnly, calculateEpubStats, TranslationProgress } from './services/epubService';
@@ -18,11 +18,9 @@ import {
     LANGUAGES_DATA, DEFAULT_TAGS, LANG_CODE_TO_LABEL, AI_MODELS, BookStats 
 } from './design';
 import { STRINGS_UI } from './lang/ui';
-import { usePwa } from './pwa/usePwa';
 
 const STORAGE_KEY_HISTORY = 'lit-trans-history';
 const STORAGE_KEY_RESUME = 'lit-trans-resume-v2';
-const STORAGE_KEY_PWA_DISMISSED = 'lit-trans-pwa-dismissed';
 
 function formatDuration(seconds?: number): string {
   if (seconds === undefined || seconds < 0) return '--';
@@ -60,10 +58,6 @@ export default function App() {
   const [isLegalExpanded, setIsLegalExpanded] = useState(false);
   const [isCreativityOptimized, setIsCreativityOptimized] = useState(false);
   
-  // PWA State (Lifted Up)
-  const { isInstallable, isAppInstalled, installApp, isIOS } = usePwa();
-  const [showPwaBanner, setShowPwaBanner] = useState(false);
-
   // Analiz ve İstatistik State'leri
   const [analyzedModelId, setAnalyzedModelId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -104,21 +98,6 @@ export default function App() {
     if (isDarkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [isDarkMode]);
-
-  // PWA Banner Kontrolü
-  useEffect(() => {
-    if (isInstallable) {
-        const dismissed = localStorage.getItem(STORAGE_KEY_PWA_DISMISSED);
-        if (!dismissed) {
-            setShowPwaBanner(true);
-        }
-    }
-  }, [isInstallable]);
-
-  const handleDismissPwa = () => {
-    setShowPwaBanner(false);
-    localStorage.setItem(STORAGE_KEY_PWA_DISMISSED, 'true');
-  };
 
   // IP Tabanlı Dil Algılama
   const detectLanguageFromIP = async (): Promise<UILanguage | null> => {
@@ -211,15 +190,26 @@ export default function App() {
 
   const handleAnalyzeAndStats = async () => {
     if (!file) return;
+
+    const currentModel = AI_MODELS.find(m => m.id === settings.modelId);
+    
+    // Sadece kilitli modeller için ücretli anahtar zorunluluğu
+    if (currentModel?.locked && !hasPaidKey) {
+         setError({ title: t.error, message: t.billingInfo });
+         setIsRightDrawerOpen(true);
+         return;
+    }
+
     setIsAnalyzing(true);
     setProgress(prev => ({ ...prev, logs: [], strategy: undefined }));
     setBookStats(null);
     
     try {
       // 1. Paralel olarak AI analizi ve İstatistik Hesaplama yap
+      // hasPaidKey durumunu ilet, böylece kota/süre hesaplaması doğru yapılır
       const [strategy, stats] = await Promise.all([
           analyzeEpubOnly(file, { ...settings, uiLang }),
-          calculateEpubStats(file, settings.targetTags)
+          calculateEpubStats(file, settings.targetTags, hasPaidKey)
       ]);
       
       // 2. State Güncelle
@@ -272,6 +262,16 @@ export default function App() {
 
   const startTranslation = async (isResuming = false) => {
     if (!file) return;
+
+    const currentModel = AI_MODELS.find(m => m.id === settings.modelId);
+    
+    // Sadece kilitli modeller için ücretli anahtar zorunluluğu
+    if (currentModel?.locked && !hasPaidKey) {
+         setError({ title: t.error, message: t.billingInfo });
+         setIsRightDrawerOpen(true);
+         return;
+    }
+
     setIsProcessing(true);
     setDownloadUrl(null);
     setIsStatsModalOpen(false); // Modal kapalı olduğundan emin ol
@@ -375,12 +375,6 @@ export default function App() {
         isVerifying={isVerifying}
         onVerifyKey={() => verifyApiKey()}
         onConnectAiStudio={handleConnectAiStudio}
-        
-        // PWA Props
-        isInstallable={isInstallable}
-        isAppInstalled={isAppInstalled}
-        installApp={installApp}
-        isIOS={isIOS}
       />
 
       <Navigation 
@@ -532,30 +526,6 @@ export default function App() {
             </section>
         </div>
       </main>
-
-      {/* PWA INSTALL BANNER */}
-      {showPwaBanner && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-sm animate-fade-scale">
-           <div className="bg-indigo-600/90 backdrop-blur-md text-white p-4 rounded-3xl shadow-[0_20px_60px_rgba(79,70,229,0.5)] border border-indigo-400/50 flex flex-col gap-3">
-              <div className="flex items-center gap-4">
-                 <div className="p-3 bg-white/20 rounded-2xl"><Smartphone size={24} /></div>
-                 <div>
-                    <h4 className="font-black text-xs uppercase tracking-widest">{t.installApp}</h4>
-                    <p className="text-[10px] leading-tight opacity-90 mt-1">{t.installDesc}</p>
-                 </div>
-              </div>
-              <div className="flex gap-2 mt-1">
-                 <button onClick={handleDismissPwa} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-[10px] uppercase transition-colors">{t.dismissBtn}</button>
-                 <button 
-                  onClick={() => { installApp(); setShowPwaBanner(false); }}
-                  className="flex-1 py-2.5 bg-white text-indigo-600 hover:bg-white/90 rounded-xl font-black text-[10px] uppercase shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
-                 >
-                    <Download size={14} /> {t.installBtn}
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
 
       {isLangModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-950/80 backdrop-blur-xl">
