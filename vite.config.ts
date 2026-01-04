@@ -33,7 +33,7 @@ export default defineConfig({
   ],
   // GitHub Pages repo adı dinamik olabileceği için './' (relative path) kullanıyoruz.
   // Eğer custom domain kullanacaksanız '/' yapabilirsiniz.
-  base: './', 
+  base: '/literary-epub-translator/', 
   build: {
     outDir: 'dist',
     sourcemap: false
