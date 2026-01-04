@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { UILanguage, UsageStats, BookStrategy } from "../design";
+import { UILanguage, UsageStats, BookStrategy, STORAGE_KEY_API } from "../design";
 import { getSystemInstruction, getAnalysisPrompt } from "../prompts";
 
 export class GeminiTranslator {
@@ -28,9 +28,14 @@ export class GeminiTranslator {
   }
 
   private getApiKey(): string {
-    // SDK boş string kabul etmediği için, eğer anahtar yoksa placeholder dönüyoruz.
-    // Bu sayede 'client-side' çökme yerine API'den dönen hatayı yakalayabiliriz.
-    return (window as any).manualApiKey || process.env.API_KEY || "AI_BROWSER_PLACEHOLDER_KEY";
+    // 1. Manuel girilen (Session)
+    // 2. LocalStorage'da kayıtlı olan
+    // 3. Env variable
+    // 4. Placeholder (Çökmeyi önlemek için)
+    return (window as any).manualApiKey || 
+           localStorage.getItem(STORAGE_KEY_API) || 
+           process.env.API_KEY || 
+           "AI_BROWSER_PLACEHOLDER_KEY";
   }
 
   setStrategy(strategy: BookStrategy) {
@@ -44,27 +49,17 @@ export class GeminiTranslator {
     return { ...this.usage };
   }
 
-  /**
-   * Çevirinin doğruluğunu ve eksik kalıp kalmadığını kontrol eder.
-   */
   private isTranslationSuspicious(original: string, translated: string): boolean {
     const cleanOrig = original.replace(/<[^>]*>/g, '').trim();
     const cleanTrans = translated.replace(/<[^>]*>/g, '').trim();
     
-    // 1. Boş sonuç kontrolü
     if (!cleanTrans || cleanTrans.length === 0) return true;
-
-    // 2. Çok kısa sonuç kontrolü (Eğer orijinal metin uzunsa)
     if (cleanOrig.length > 50 && cleanTrans.length < 5) return true;
-
-    // 3. Hiç değişmeyen metin kontrolü
     if (cleanOrig.length > 10 && cleanOrig === cleanTrans) return true;
     
-    // 4. Dil bazlı kontrol (Hedef Türkçe ise İngilizce belirteçleri ara)
     if (this.targetLanguage.toLowerCase().includes('turkish')) {
         const englishMarkers = [' the ', ' and ', ' with ', ' that ', ' which '];
         const foundMarkers = englishMarkers.filter(m => cleanTrans.toLowerCase().includes(m));
-        // Eğer uzun bir paragrafta hala çok fazla İngilizce bağlaç varsa şüphelidir
         if (foundMarkers.length > 3 && cleanOrig.length > 100) return true;
     }
 
@@ -73,7 +68,6 @@ export class GeminiTranslator {
 
   async analyzeBook(metadata: any, coverInfo?: { data: string, mimeType: string }, uiLang: UILanguage = 'en', feedback?: string): Promise<BookStrategy> {
     const apiKey = this.getApiKey();
-    
     const ai = new GoogleGenAI({ apiKey });
     const prompt = getAnalysisPrompt(this.sourceLanguage, this.targetLanguage, metadata, uiLang, feedback);
 
@@ -114,8 +108,14 @@ export class GeminiTranslator {
       if (err.message?.includes('429')) {
         throw new Error("QUOTA_EXHAUSTED_DURING_ANALYSIS");
       }
+      // Placeholder key kullanıldıysa ve API reddettiyse, UI'ın yakalaması için özel hata fırlat
+      if (err.message?.includes('API key') || err.message?.includes('400') || err.message?.includes('403')) {
+        if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") {
+            throw new Error("MISSING_KEY_REDIRECT");
+        }
+      }
+
       console.warn("Analysis failed, using fallback.", err);
-      // Fallback Strategy
       return { 
         genre_en: "Literature", tone_en: "Narrative", author_style_en: "Fluid", strategy_en: "Fidelity",
         genre_translated: "Literature", 
@@ -138,7 +138,6 @@ export class GeminiTranslator {
     }
 
     const apiKey = this.getApiKey();
-
     const ai = new GoogleGenAI({ apiKey });
     
     try {
@@ -158,16 +157,12 @@ export class GeminiTranslator {
       }
 
       let translated = (response.text || "").trim();
-      
-      // Markdown bloklarını temizle
       translated = translated.replace(/^```(html|xhtml|xml)?\n?/i, '').replace(/\n?```$/i, '').trim();
 
-      // BOŞ ÇEVİRİ ÖNLEME: Eğer sonuç boşsa veya şüpheliyse hata fırlat
       if (this.isTranslationSuspicious(trimmed, translated)) {
           if (!isRetry) {
               throw new Error("TRANSLATION_SKIPPED_OR_INVALID");
           } else {
-              // İkinci denemede de başarısızsa orijinali dönmek yerine hata ver ki sistem dursun veya kullanıcıyı uyarsın
               throw new Error("HARD_TRANSLATION_FAILURE");
           }
       }
@@ -181,9 +176,11 @@ export class GeminiTranslator {
       if (error.message?.includes('429')) {
         throw new Error("API_QUOTA_EXCEEDED");
       }
-      // API Key hatalarını daha temiz loglamak için (Placeholder key durumu)
-      if (error.message?.includes('API key') || error.message?.includes('400')) {
-          console.warn("API Key Error:", error);
+      // Placeholder key hatasını yakala ve yönlendir
+      if (error.message?.includes('API key') || error.message?.includes('400') || error.message?.includes('403')) {
+          if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") {
+              throw new Error("MISSING_KEY_REDIRECT");
+          }
       }
       throw error;
     }
