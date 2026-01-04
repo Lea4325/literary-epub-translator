@@ -1,0 +1,213 @@
+import React, { useState } from 'react';
+import { 
+  Settings, X, LayoutDashboard, Sun, Moon, Globe, Key, Lock, Unlock, Zap, 
+  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, Smartphone, Download, ExternalLink
+} from 'lucide-react';
+import { TranslationSettings, AI_MODELS, UILanguage } from '../design';
+
+interface SettingsDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  t: any; // UI Strings
+  settings: TranslationSettings;
+  onUpdateSettings: (newSettings: TranslationSettings) => void;
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
+  uiLang: UILanguage;
+  onOpenLangModal: () => void;
+  hasPaidKey: boolean;
+  manualKey: string;
+  setManualKey: (key: string) => void;
+  isVerifying: boolean;
+  onVerifyKey: () => void;
+  onConnectAiStudio: () => void;
+  
+  // PWA Props
+  isInstallable: boolean;
+  isAppInstalled: boolean;
+  installApp: () => void;
+  isIOS: boolean;
+}
+
+export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
+  isOpen,
+  onClose,
+  t,
+  settings,
+  onUpdateSettings,
+  isDarkMode,
+  onToggleTheme,
+  uiLang,
+  onOpenLangModal,
+  hasPaidKey,
+  manualKey,
+  setManualKey,
+  isVerifying,
+  onVerifyKey,
+  onConnectAiStudio,
+  isInstallable,
+  isAppInstalled,
+  installApp,
+  isIOS
+}) => {
+  const [showKey, setShowKey] = useState(false);
+
+  // Model ID'ye göre çeviri anahtarını eşleştir
+  const getModelDesc = (modelId: string) => {
+    if (modelId === 'gemini-flash-lite-latest') return t.modelDescFree || 'Free';
+    if (modelId === 'gemini-3-flash-preview') return t.modelDescBalanced || 'Balanced';
+    if (modelId === 'gemini-3-pro-preview') return t.modelDescExpert || 'Expert';
+    return '';
+  };
+
+  return (
+    <aside className={`fixed top-0 right-0 h-full w-80 bg-white dark:bg-slate-900 z-[80] shadow-2xl transition-transform duration-300 transform border-l border-slate-200 dark:border-slate-800 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className="flex flex-col h-full">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+          <h3 className="text-xs font-black tracking-widest text-indigo-600 uppercase flex items-center gap-2">
+            <Settings size={16}/> {t.settingsTitle}
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+            <X size={18}/>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+          
+          {/* PWA Section - Always visible now */}
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-4 rounded-3xl shadow-lg text-white relative overflow-hidden group">
+              <div className="relative z-10 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                      <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm"><Smartphone size={18} /></div>
+                      <span className="text-xs font-black uppercase tracking-wider">{t.installApp}</span>
+                  </div>
+
+                  {isInstallable ? (
+                      <button 
+                      onClick={installApp}
+                      className="w-full py-3 bg-white text-indigo-600 rounded-xl font-black text-[11px] uppercase shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+                      >
+                      <Download size={14}/> {t.installBtn}
+                      </button>
+                  ) : isAppInstalled ? (
+                      <div className="w-full py-3 bg-white/20 text-white rounded-xl font-black text-[11px] uppercase flex items-center justify-center gap-2 cursor-default border border-white/30">
+                          <Check size={14} /> {t.appInstalled || "INSTALLED"}
+                      </div>
+                  ) : (
+                      <div className="text-[10px] text-white/80 leading-snug bg-black/20 p-3 rounded-xl border border-white/10">
+                          {isIOS ? t.pwaIOS : t.pwaBrowser}
+                      </div>
+                  )}
+              </div>
+              {/* Decorative Icon */}
+              <Smartphone size={100} className="absolute -bottom-4 -right-4 text-white/10 rotate-12 group-hover:scale-110 transition-transform"/>
+          </div>
+
+          {/* Interface Settings */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <LayoutDashboard size={12}/> {t.interfaceSettings}
+            </label>
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-3xl border border-slate-100 dark:border-slate-700/50 space-y-5">
+              <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">{t.themeMode}</span>
+                  <button onClick={onToggleTheme} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm text-indigo-600 transition-all hover:scale-105 active:scale-95">
+                    {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+                    <span className="text-[10px] font-black uppercase">{isDarkMode ? t.themeLight : t.themeDark}</span>
+                  </button>
+              </div>
+              <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">{t.appLanguage}</span>
+                  <button onClick={onOpenLangModal} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl shadow-sm transition-all hover:bg-indigo-700 active:scale-95">
+                    <Globe size={14} />
+                    <span className="text-[10px] font-black uppercase">{uiLang.toUpperCase()}</span>
+                  </button>
+              </div>
+            </div>
+          </div>
+
+          {/* API & Key Status */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Key size={12}/> {t.apiStatus}
+            </label>
+            <div className={`p-5 rounded-[2rem] border-2 transition-all duration-500 shadow-lg ${hasPaidKey ? 'bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-500/50' : 'bg-white dark:bg-slate-800/60 border-slate-100 dark:border-slate-700/50'}`}>
+              <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_8px] ${hasPaidKey ? 'bg-green-500 animate-pulse shadow-green-500/50' : 'bg-amber-500 shadow-amber-500/50'}`}></div>
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${hasPaidKey ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-300'}`}>{hasPaidKey ? t.paidMode : t.freeMode}</span>
+                  </div>
+                  <div className="p-1.5 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                  {hasPaidKey ? <Unlock size={14} className="text-indigo-500" /> : <Lock size={14} className="text-slate-400 dark:text-slate-500" />}
+                  </div>
+              </div>
+              <button onClick={onConnectAiStudio} className="w-full flex items-center justify-center gap-2.5 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-[11px] uppercase transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] disabled:opacity-50 mb-6 group">
+                <Zap size={14} className="group-hover:animate-pulse" fill="currentColor"/> {t.connectAiStudio}
+              </button>
+              <div className="space-y-3.5 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                <div className="flex justify-between items-center px-1">
+                   <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">{t.manualKeyLabel}</label>
+                   <a 
+                     href="https://aistudio.google.com/app/apikey" 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="text-[9px] font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 hover:underline"
+                   >
+                     {t.getApiKeyLink} <ExternalLink size={10} />
+                   </a>
+                </div>
+                <div className="relative group">
+                    <input 
+                      type={showKey ? "text" : "password"} 
+                      value={manualKey} 
+                      onChange={(e) => setManualKey(e.target.value)} 
+                      placeholder={t.manualKeyPlaceholder} 
+                      className="w-full bg-slate-50 dark:bg-slate-900/80 border-2 border-slate-100 dark:border-slate-700 rounded-2xl py-4 pl-4 pr-12 text-[12px] font-mono outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner text-slate-700 dark:text-slate-200" 
+                    />
+                    <button onClick={() => setShowKey(!showKey)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-500 transition-colors p-1.5">
+                      {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                </div>
+                <button 
+                  onClick={onVerifyKey} 
+                  disabled={isVerifying || !manualKey} 
+                  className="w-full py-4 bg-slate-900 dark:bg-indigo-600/90 hover:bg-black dark:hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg"
+                >
+                  {isVerifying ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} {isVerifying ? t.checkKey : t.verifyBtn}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Selection */}
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Sliders size={12}/> {t.modelLabel}
+            </label>
+            <div className="grid grid-cols-1 gap-2">
+              {AI_MODELS.map(m => {
+                const isLocked = m.locked && !hasPaidKey;
+                return (
+                <button 
+                  key={m.id} 
+                  disabled={isLocked} 
+                  onClick={() => onUpdateSettings({...settings, modelId: m.id})} 
+                  className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${settings.modelId === m.id ? 'border-indigo-500 bg-indigo-50/20 dark:bg-indigo-900/10' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'}`}
+                >
+                  {isLocked && <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/70 flex items-center justify-center backdrop-blur-[1px]"><Lock size={12} className="text-slate-400 dark:text-slate-500" /></div>}
+                  <div className="flex justify-between items-center">
+                    <div>
+                        <span className={`text-[10px] font-black block ${settings.modelId === m.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-300'}`}>{m.name}</span>
+                        <span className="text-[9px] font-medium text-slate-400">{getModelDesc(m.id)}</span>
+                    </div>
+                    {settings.modelId === m.id && <Check size={12} className="text-indigo-500" />}
+                  </div>
+                </button>
+              )})}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </aside>
+  );
+};

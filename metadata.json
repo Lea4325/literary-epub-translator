@@ -1,0 +1,5 @@
+{
+  "name": "Literary EPUB Translator",
+  "description": "A robust, client-side web application built with React (TypeScript), Vite, and Tailwind CSS. It translates EPUB books using the Google Gemini API directly in the browser, preserving literary style and formatting. No Python or backend server required.",
+  "requestFramePermissions": []
+}

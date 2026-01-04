@@ -1,0 +1,237 @@
+import { LANGUAGES_DATA } from '../design';
+
+export const STRINGS_LOGS: Record<string, any> = {
+  tr: { 
+    analyzing: "Analiz ediliyor...", 
+    found: "{0} dosya bulundu.", 
+    quotaExceeded: "Kota sınırı! 60 saniye bekleniyor...", 
+    noQuota: "YETERLİ TOKEN YOK: API kotanız tükenmiş görünüyor.",
+    finished: "Tamamlandı!", 
+    processingFile: "İşleniyor: {0}", 
+    saving: "Dosyalar hazırlanıyor...", 
+    error: "Hata: {0}", 
+    repairing: "Boş veya hatalı çeviri tespit edildi, onarılıyor...", 
+    repairFailed: "Onarım başarısız, orijinal metin korundu.",
+    verifying: "Çeviri bütünlüğü doğrulanıyor...",
+    preComputed: "Önceden hesaplanmış analiz stratejisi kullanılıyor."
+  },
+  en: { 
+    analyzing: "Analyzing...", 
+    found: "{0} files found.", 
+    quotaExceeded: "Quota exceeded! Waiting 60s...", 
+    noQuota: "INSUFFICIENT TOKENS: Your API quota seems to be exhausted.",
+    finished: "Completed!", 
+    processingFile: "Processing: {0}", 
+    saving: "Preparing files...", 
+    error: "Error: {0}", 
+    repairing: "Empty or invalid translation detected, repairing...", 
+    repairFailed: "Repair failed, original text preserved.",
+    verifying: "Verifying integrity...",
+    preComputed: "Using pre-computed analysis strategy."
+  },
+  fr: { 
+    analyzing: "Analyse en cours...", 
+    found: "{0} fichiers trouvés.", 
+    quotaExceeded: "Quota dépassé ! Attente 60s...", 
+    noQuota: "JETONS INSUFFISANTS : Votre quota API semble épuisé.",
+    finished: "Terminé !", 
+    processingFile: "Traitement : {0}", 
+    saving: "Préparation des fichiers...", 
+    error: "Erreur : {0}", 
+    repairing: "Traduction vide ou invalide détectée, réparation...", 
+    repairFailed: "Réparation échouée, texte original conservé.",
+    verifying: "Vérification de l'intégrité...",
+    preComputed: "Utilisation de la stratégie d'analyse pré-calculée."
+  },
+  de: { 
+    analyzing: "Analysieren...", 
+    found: "{0} Dateien gefunden.", 
+    quotaExceeded: "Quote überschritten! Warte 60s...", 
+    noQuota: "UNZUREICHENDE TOKEN: Ihr API-Kontingent scheint erschöpft zu sein.",
+    finished: "Abgeschlossen!", 
+    processingFile: "Verarbeitung: {0}", 
+    saving: "Dateien vorbereiten...", 
+    error: "Fehler: {0}", 
+    repairing: "Leere oder ungültige Übersetzung erkannt, repariere...", 
+    repairFailed: "Reparatur fehlgeschlagen, Originaltext beibehalten.",
+    verifying: "Integrität wird überprüft...",
+    preComputed: "Verwendung der vorberechneten Analysestrategie."
+  },
+  es: { 
+    analyzing: "Analizando...", 
+    found: "{0} archivos encontrados.", 
+    quotaExceeded: "¡Cuota excedida! Esperando 60s...", 
+    noQuota: "TOKENS INSUFICIENTES: Su cuota de API parece estar agotada.",
+    finished: "¡Completado!", 
+    processingFile: "Procesando: {0}", 
+    saving: "Preparando archivos...", 
+    error: "Error: {0}", 
+    repairing: "Traducción vacía o inválida detectada, reparando...", 
+    repairFailed: "Reparación fallida, texto original conservado.",
+    verifying: "Verificando integridad...",
+    preComputed: "Usando estrategia de análisis precalculada."
+  },
+  it: { 
+    analyzing: "Analisi in corso...", 
+    found: "{0} file trovati.", 
+    quotaExceeded: "Quota superata! Attesa 60s...", 
+    noQuota: "TOKEN INSUFFICIENTI: La tua quota API sembra esaurita.",
+    finished: "Completato!", 
+    processingFile: "Elaborazione: {0}", 
+    saving: "Preparazione file...", 
+    error: "Errore: {0}", 
+    repairing: "Traduzione vuota o non valida rilevata, riparazione...", 
+    repairFailed: "Riparazione fallita, testo originale conservato.",
+    verifying: "Verifica integrità...",
+    preComputed: "Utilizzo della strategia di analisi pre-calcolata."
+  },
+  ru: { 
+    analyzing: "Анализ...", 
+    found: "Найдено файлов: {0}.", 
+    quotaExceeded: "Квота превышена! Ожидание 60с...", 
+    noQuota: "НЕДОСТАТОЧНО ТОКЕНОВ: Ваша квота API исчерпана.",
+    finished: "Готово!", 
+    processingFile: "Обработка: {0}", 
+    saving: "Подготовка файлов...", 
+    error: "Ошибка: {0}", 
+    repairing: "Обнаружен пустой или неверный перевод, исправление...", 
+    repairFailed: "Исправление не удалось, исходный текст сохранен.",
+    verifying: "Проверка целостности...",
+    preComputed: "Используется предварительно вычисленная стратегия."
+  },
+  zh: { 
+    analyzing: "正在分析...", 
+    found: "找到 {0} 个文件。", 
+    quotaExceeded: "配额超限！等待 60 秒...", 
+    noQuota: "令牌不足：您的 API 配额似乎已耗尽。",
+    finished: "完成！", 
+    processingFile: "正在处理：{0}", 
+    saving: "准备文件...", 
+    error: "错误：{0}", 
+    repairing: "检测到空或无效翻译，正在修复...", 
+    repairFailed: "修复失败，保留原文。",
+    verifying: "正在验证完整性...",
+    preComputed: "使用预先计算的分析策略。"
+  },
+  ja: { 
+    analyzing: "分析中...", 
+    found: "{0} 個のファイルが見つかりました。", 
+    quotaExceeded: "クォータ超過！60秒待機中...", 
+    noQuota: "トークン不足: APIクォータが枯渇しているようです。",
+    finished: "完了！", 
+    processingFile: "処理中: {0}", 
+    saving: "ファイルを準備中...", 
+    error: "エラー: {0}", 
+    repairing: "空または無効な翻訳を検出、修復中...", 
+    repairFailed: "修復に失敗しました。原文を保持します。",
+    verifying: "整合性を確認中...",
+    preComputed: "事前計算された分析戦略を使用しています。"
+  },
+  ko: { 
+    analyzing: "분석 중...", 
+    found: "{0}개의 파일 발견.", 
+    quotaExceeded: "할당량 초과! 60초 대기 중...", 
+    noQuota: "토큰 부족: API 할당량이 소진된 것 같습니다.",
+    finished: "완료!", 
+    processingFile: "처리 중: {0}", 
+    saving: "파일 준비 중...", 
+    error: "오류: {0}", 
+    repairing: "비어 있거나 잘못된 번역 감지, 복구 중...", 
+    repairFailed: "복구 실패, 원문 유지.",
+    verifying: "무결성 확인 중...",
+    preComputed: "사전 계산된 분석 전략을 사용 중입니다."
+  },
+  ar: { 
+    analyzing: "جارٍ التحليل...", 
+    found: "تم العثور على {0} ملفات.", 
+    quotaExceeded: "تجاوز الحصة! انتظار 60 ثانية...", 
+    noQuota: "الرموز غير كافية: يبدو أن حصة API الخاصة بك قد نفدت.",
+    finished: "مكتمل!", 
+    processingFile: "جارٍ المعالجة: {0}", 
+    saving: "تحضير الملفات...", 
+    error: "خطأ: {0}", 
+    repairing: "تم اكتشاف ترجمة فارغة أو غير صالحة، جارٍ الإصلاح...", 
+    repairFailed: "فشل الإصلاح، تم الاحتفاظ بالنص الأصلي.",
+    verifying: "التحقق من السلامة...",
+    preComputed: "استخدام استراتيجية التحليل المحسوبة مسبقًا."
+  },
+  pt: { 
+    analyzing: "Analisando...", 
+    found: "{0} arquivos encontrados.", 
+    quotaExceeded: "Cota excedida! Aguardando 60s...", 
+    noQuota: "TOKENS INSUFICIENTES: Sua cota de API parece esgotada.",
+    finished: "Concluído!", 
+    processingFile: "Processando: {0}", 
+    saving: "Preparando arquivos...", 
+    error: "Erro: {0}", 
+    repairing: "Tradução vazia ou inválida detectada, reparando...", 
+    repairFailed: "Reparo falhou, texto original mantido.",
+    verifying: "Verificando integridade...",
+    preComputed: "Usando estratégia de análise pré-calculada."
+  },
+  nl: { 
+    analyzing: "Analyseren...", 
+    found: "{0} bestanden gevonden.", 
+    quotaExceeded: "Quota overschreden! Wachten 60s...", 
+    noQuota: "ONVOLDOENDE TOKENS: Uw API-quotum lijkt uitgeput.",
+    finished: "Voltooid!", 
+    processingFile: "Verwerken: {0}", 
+    saving: "Bestanden voorbereiden...", 
+    error: "Fout: {0}", 
+    repairing: "Lege of ongeldige vertaling gedetecteerd, repareren...", 
+    repairFailed: "Reparatie mislukt, originele tekst behouden.",
+    verifying: "Integriteit verifiëren...",
+    preComputed: "Gebruik van vooraf berekende analysestrategie."
+  },
+  pl: { 
+    analyzing: "Analizowanie...", 
+    found: "Znaleziono {0} plików.", 
+    quotaExceeded: "Przekroczono limit! Czekam 60s...", 
+    noQuota: "NIEWYSTARCZAJĄCE TOKENY: Twój limit API wydaje się wyczerpany.",
+    finished: "Zakończono!", 
+    processingFile: "Przetwarzanie: {0}", 
+    saving: "Przygotowywanie plików...", 
+    error: "Błąd: {0}", 
+    repairing: "Wykryto puste lub nieprawidłowe tłumaczenie, naprawianie...", 
+    repairFailed: "Naprawa nie powiodła się, zachowano tekst oryginalny.",
+    verifying: "Weryfikacja integralności...",
+    preComputed: "Używanie wstępnie obliczonej strategii analizy."
+  },
+  hi: { 
+    analyzing: "विश्लेषण कर रहा है...", 
+    found: "{0} फ़ाइलें मिलीं।", 
+    quotaExceeded: "कोटा पार! 60 सेकंड प्रतीक्षा...", 
+    noQuota: "अपर्याप्त टोकन: आपका API कोटा समाप्त हो गया लगता है।",
+    finished: "पूरा हुआ!", 
+    processingFile: "प्रोसेसिंग: {0}", 
+    saving: "फ़ाइलें तैयार कर रहा है...", 
+    error: "त्रुटि: {0}", 
+    repairing: "खाली या अमान्य अनुवाद का पता चला, मरम्मत...", 
+    repairFailed: "मरम्मत विफल, मूल पाठ सुरक्षित।",
+    verifying: "अखंडता की पुष्टि...",
+    preComputed: "पूर्व-गणना विश्लेषण रणनीति का उपयोग करना।"
+  },
+  vi: { 
+    analyzing: "Đang phân tích...", 
+    found: "Tìm thấy {0} tệp.", 
+    quotaExceeded: "Vượt quá hạn ngạch! Đợi 60 giây...", 
+    noQuota: "KHÔNG ĐỦ TOKEN: Hạn ngạch API của bạn có vẻ đã hết.",
+    finished: "Hoàn thành!", 
+    processingFile: "Đang xử lý: {0}", 
+    saving: "Đang chuẩn bị tệp...", 
+    error: "Lỗi: {0}", 
+    repairing: "Phát hiện bản dịch trống hoặc không hợp lệ, đang sửa...", 
+    repairFailed: "Sửa thất bại, văn bản gốc được giữ lại.",
+    verifying: "Đang xác minh tính toàn vẹn...",
+    preComputed: "Sử dụng chiến lược phân tích đã tính toán."
+  }
+};
+
+// Yedek kontrol: Eğer bir dil eksik kalırsa İngilizce ile doldur
+LANGUAGES_DATA.forEach(lang => {
+  if (!STRINGS_LOGS[lang.code]) {
+    STRINGS_LOGS[lang.code] = { ...STRINGS_LOGS['en'] };
+  } else {
+    STRINGS_LOGS[lang.code] = { ...STRINGS_LOGS['en'], ...STRINGS_LOGS[lang.code] };
+  }
+});
