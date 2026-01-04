@@ -100,7 +100,7 @@ export const LANG_CODE_TO_LABEL: Record<string, string> = {
 };
 
 export const AI_MODELS = [
-    { id: 'gemini-flash-lite-latest', name: 'Gemini Lite', desc: 'Free (24/7)', locked: false },
+    { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite', desc: 'Free (24/7)', locked: false },
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', desc: 'Balanced', locked: true }, // Status depends on key
     { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', desc: 'Expert', locked: true }        // Status depends on key
 ];
