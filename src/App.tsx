@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, Play, AlertCircle, Loader2, Clock, 
   Sparkles, Shield, ChevronDown, RefreshCw, Settings as SettingsIcon,
-  BarChart3, Activity, StepForward, BrainCircuit, Check, X
+  BarChart3, Activity, StepForward, BrainCircuit, Check, X, Timer
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { processEpub, analyzeEpubOnly, calculateEpubStats, TranslationProgress } from './services/epubService';
@@ -140,13 +140,10 @@ export default function App() {
       try { setResumeData(JSON.parse(savedResume)); } catch {}
     }
 
-    // --- KEY RESTORE LOGIC ---
     let foundKey = false;
     const localKey = localStorage.getItem(STORAGE_KEY_API);
     if (localKey) {
         setManualKey(localKey);
-        // Varsayılan olarak key varsa Paid kabul et (verify ile kontrol edilecek)
-        // Ama başlangıçta hata vermemesi için true yapıyoruz.
         setHasPaidKey(true);
         foundKey = true;
     } else {
@@ -159,9 +156,6 @@ export default function App() {
         } catch(e) {}
     }
 
-    // BAŞLANGIÇTA ZORLA ÜCRETSİZ MODELİ SEÇ
-    // Anahtar olsun veya olmasın, güvenli taraf 'gemini-flash-lite-latest'.
-    // Kullanıcı Pro model istiyorsa kendisi seçmeli.
     setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
     
     setIsInitializing(false);
@@ -183,7 +177,6 @@ export default function App() {
 
     if (!finalKey) { setIsVerifying(false); return; }
     
-    // UI'da anahtarı hemen kaydet ki analiz sırasında kullanılabilsin
     (window as any).manualApiKey = finalKey;
     localStorage.setItem(STORAGE_KEY_API, finalKey);
 
@@ -195,13 +188,7 @@ export default function App() {
       }
     } catch (e: any) {
       console.warn("API Verification Warning:", e);
-      // Hata alsa bile (429, 500 vb.) anahtar formatı doğruysa kaydet.
-      // Sadece 400 (Invalid Key) durumunda anahtarı reddetmek mantıklı olurdu ama
-      // ücretsiz modda kullanıcıyı engellememek için "Free/Limited" olarak işaretliyoruz.
       setHasPaidKey(false); 
-      
-      // Anahtarı silmiyoruz! Kullanıcı doğru girdiğini düşünüyorsa devam edebilmeli.
-      // Sadece 'hasPaidKey' false olduğu için Pro modellere geçemeyecek.
     } finally { setIsVerifying(false); }
   };
 
@@ -210,7 +197,6 @@ export default function App() {
     (window as any).manualApiKey = null;
     setManualKey('');
     setHasPaidKey(false);
-    // Anahtar silinince otomatik olarak ücretsiz modele düş
     setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
   };
 
@@ -232,7 +218,6 @@ export default function App() {
   const handleAnalyzeAndStats = async () => {
     if (!file) return;
 
-    // KOTA VE MODEL KONTROLÜ (AUTO-DOWNGRADE)
     let effectiveModelId = settings.modelId;
     if (!hasPaidKey) {
          effectiveModelId = 'gemini-flash-lite-latest';
@@ -244,11 +229,8 @@ export default function App() {
     setBookStats(null);
     
     try {
-      // effectiveModelId kullanarak ayarları oluştur
       const effectiveSettings = { ...settings, modelId: effectiveModelId, uiLang, hasPaidKey };
 
-      // Analiz başarısız olsa bile istatistikler hesaplanmalı.
-      // analyzeEpubOnly artık hata fırlatmak yerine fallback döndürüyor (missing key hariç).
       const [strategy, stats] = await Promise.all([
           analyzeEpubOnly(file, effectiveSettings),
           calculateEpubStats(file, settings.targetTags, hasPaidKey)
@@ -267,11 +249,9 @@ export default function App() {
 
     } catch (err: any) {
       console.error("Analysis Error:", err);
-      // Sadece ve sadece anahtar gerçekten yoksa ayarları aç
       if (err.message === "MISSING_KEY_REDIRECT") {
           handleMissingKey();
       } else {
-          // Diğer durumlarda (Quota vb.) kullanıcıya hata göster ama akışı bozma
           setError({ title: t.error, message: err.message || "Analysis failed due to an unknown error." });
       }
     } finally {
@@ -303,7 +283,6 @@ export default function App() {
   const startTranslation = async (isResuming = false) => {
     if (!file) return;
 
-    // START TUŞUNA BASILDIĞINDA DA MODEL KONTROLÜ YAP
     let effectiveModelId = settings.modelId;
     if (!hasPaidKey) {
         effectiveModelId = 'gemini-flash-lite-latest';
@@ -363,6 +342,7 @@ export default function App() {
         if (err.message === "MISSING_KEY_REDIRECT") {
             handleMissingKey();
         } else if (err.message?.includes('429') || err.message?.includes('quota')) {
+          // 429 zaten processEpub içinde yönetiliyor, buraya düşerse beklenmeyen bir durumdur
           setError({ title: t.error, message: t.quotaError });
         } else {
           setError({ title: t.error, message: err.message });
@@ -378,6 +358,8 @@ export default function App() {
       setIsStatsModalOpen(true);
     }
   };
+
+  const isWaiting = progress.status === 'waiting';
 
   if (isInitializing) return <div className="h-screen flex items-center justify-center dark:bg-slate-950"><Loader2 className="animate-spin text-indigo-500" size={40} /></div>;
 
@@ -400,7 +382,6 @@ export default function App() {
         isAnalyzing={isAnalyzing}
       />
 
-      {/* Components */}
       <HistoryDrawer 
         isOpen={isLeftDrawerOpen}
         onClose={() => setIsLeftDrawerOpen(false)}
@@ -448,8 +429,22 @@ export default function App() {
                   <div className="flex items-center gap-1.5 md:gap-2"><BarChart3 size={12} className="text-indigo-500 md:w-3.5 md:h-3.5" /><span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase">{t.tokens}:</span><span className="text-[10px] md:text-xs font-black italic whitespace-nowrap">{progress.usage?.totalTokens.toLocaleString() || 0}</span></div>
               </div>
               <div className="flex items-center gap-3 md:gap-6 shrink-0">
-                  <div className="flex items-center gap-1.5 md:gap-2"><Activity size={12} className="text-blue-500 md:w-3.5 md:h-3.5" /><span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase">{t.speed}:</span><span className="text-[10px] md:text-xs font-black italic whitespace-nowrap">{isProcessing ? `${progress.wordsPerSecond?.toFixed(1)} w/s` : '--'}</span></div>
-                  <div className="flex items-center gap-1.5 md:gap-2"><Clock size={12} className="text-amber-500 md:w-3.5 md:h-3.5" /><span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase">{t.eta}:</span><span className="text-[10px] md:text-xs font-black italic whitespace-nowrap">{isProcessing ? formatDuration(progress.etaSeconds) : '--'}</span></div>
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                     {isWaiting ? <Timer size={12} className="text-amber-500 animate-pulse md:w-3.5 md:h-3.5"/> : <Activity size={12} className="text-blue-500 md:w-3.5 md:h-3.5" />}
+                     <span className={`text-[8px] md:text-[9px] font-black uppercase ${isWaiting ? 'text-amber-500' : 'text-slate-400'}`}>{t.speed}:</span>
+                     <span className={`text-[10px] md:text-xs font-black italic whitespace-nowrap ${isWaiting ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                        {isProcessing || isWaiting ? `${progress.wordsPerSecond?.toFixed(1)} w/s` : '--'}
+                     </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                     <Clock size={12} className={`${isWaiting ? 'text-amber-500' : 'text-amber-500'} md:w-3.5 md:h-3.5`} />
+                     <span className={`text-[8px] md:text-[9px] font-black uppercase ${isWaiting ? 'text-amber-500' : 'text-slate-400'}`}>
+                        {isWaiting ? `WAITING (${progress.waitCountdown}s)` : t.eta}:
+                     </span>
+                     <span className={`text-[10px] md:text-xs font-black italic whitespace-nowrap ${isWaiting ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                        {isProcessing || isWaiting ? formatDuration(progress.etaSeconds) : '--'}
+                     </span>
+                  </div>
               </div>
           </div>
       </div>
@@ -516,7 +511,6 @@ export default function App() {
                     <Sparkles size={18}/>
                     <h3 className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em]">{t.aiAnalysis}</h3>
                   </div>
-                  {/* Analiz zaten varsa ve işlem yapılmıyorsa Yeniden Analiz Et butonları */}
                   {file && progress.strategy && !isProcessing && (
                      <div className="flex gap-2">
                         <button onClick={handleAnalyzeAndStats} disabled={isAnalyzing} className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors" title={t.reAnalyze}>
@@ -555,7 +549,6 @@ export default function App() {
             </div>
 
             <section onClick={() => setIsLegalExpanded(!isLegalExpanded)} className={`w-full max-w-[680px] bg-white dark:bg-[#1a1405] rounded-[2.5rem] md:rounded-[3rem] border-2 transition-all duration-700 p-5 md:p-8 shadow-[0_10px_40px_-15px_rgba(245,158,11,0.15)] mb-12 relative overflow-hidden cursor-pointer group select-none hover:shadow-[0_15px_50px_-10px_rgba(245,158,11,0.2)] ${isLegalExpanded ? 'border-amber-400 ring-4 ring-amber-500/5' : 'border-slate-100 dark:border-amber-900/10'}`}>
-                {/* ESTETİK FİLİGRAN EMOJİ - ⚖️ */}
                 <div className="absolute -top-6 -right-6 md:-top-10 md:-right-10 pointer-events-none group-hover:scale-110 group-hover:rotate-6 transition-all duration-1000 opacity-20 dark:opacity-[0.08] select-none grayscale sepia">
                     <span className="text-[180px] md:text-[240px] leading-none">⚖️</span>
                 </div>
