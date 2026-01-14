@@ -191,14 +191,15 @@ export class GeminiTranslator {
       jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(jsonStr);
     } catch (err: any) {
-      if (err.message?.includes('429')) throw new Error("QUOTA_EXHAUSTED_DURING_ANALYSIS");
       if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("MISSING_KEY_REDIRECT");
       
-      console.warn("Analysis failed, using fallback.", err);
+      // 429 Kota hatası veya diğer analiz hatalarında Fallback stratejisine dön, işlemi durdurma.
+      console.warn("Analysis failed or quota exceeded, using fallback.", err);
       return { 
         genre_en: "Literature", tone_en: "Narrative", author_style_en: "Fluid", strategy_en: "Fidelity",
         genre_translated: "Edebiyat", tone_translated: "Anlatı", author_style_translated: "Akıcı", strategy_translated: "Sadakat",
-        literary_fidelity_note: "Fallback strategy.", detected_creativity_level: 0.3
+        literary_fidelity_note: "Quota exceeded during analysis. Using standard literary strategy.", detected_creativity_level: 0.3,
+        isFallback: true 
       };
     }
   }
@@ -272,8 +273,10 @@ export class GeminiTranslator {
 
         } catch (error: any) {
             lastError = error;
-            // Kritik hatalarda (Kota, Key) hemen çık
+            // Kota hatası (429) durumunda "API_QUOTA_EXCEEDED" fırlat, bu epubService tarafından yakalanıp bekletilecek.
             if (error.message?.includes('429')) throw new Error("API_QUOTA_EXCEEDED");
+            
+            // Sadece anahtar gerçekten yoksa veya geçersizse yönlendir.
             if (error.message?.includes('API key') || apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("MISSING_KEY_REDIRECT");
             
             attempt++;
@@ -282,8 +285,7 @@ export class GeminiTranslator {
     }
     
     // FALLBACK: Tüm denemeler başarısız olduysa, uygulamanın çökmesini engellemek için
-    // orijinal metni döndür ve devam et. Bu özellikle TOC ve Kaynakça gibi 
-    // AI'ın çevirmekte zorlandığı veya reddettiği kısımlarda hayati önem taşır.
+    // orijinal metni döndür ve devam et.
     console.warn("All translation attempts failed. Using original text as fallback.", trimmed);
     return trimmed; 
   }
