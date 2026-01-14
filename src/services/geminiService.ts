@@ -130,6 +130,9 @@ export class GeminiTranslator {
     const prompt = getAnalysisPrompt(this.sourceLanguage, this.targetLanguage, metadata, uiLang, feedback);
 
     try {
+      // Eğer placeholder key ise boşuna API'ye gitme, direkt fallback dön.
+      if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("PLACEHOLDER_KEY");
+
       const response = await ai.models.generateContent({
         model: this.modelName, 
         contents: prompt,
@@ -165,12 +168,11 @@ export class GeminiTranslator {
       jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(jsonStr);
     } catch (err: any) {
-      // Eğer anahtar kesinlikle yoksa yönlendir.
-      if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("MISSING_KEY_REDIRECT");
+      // KESİNLİKLE YÖNLENDİRME YAPMA.
+      // Analiz başarısız olursa (kota, key hatası, sunucu hatası farketmez)
+      // Varsayılan bir strateji ile devam et ki kullanıcı arayüzü kilitlenmesin.
+      console.warn("Analysis failed (Key missing, Quota exceeded, or Network error). Using fallback strategy.", err);
       
-      // Kota hatası (429), Sunucu Hatası (500) veya diğer analiz hatalarında 
-      // ASLA durma, Fallback stratejisine dön.
-      console.warn("Analysis failed or quota exceeded, using fallback.", err);
       return { 
         genre_en: "Literature", tone_en: "Narrative", author_style_en: "Fluid", strategy_en: "Fidelity",
         genre_translated: "Edebiyat", tone_translated: "Anlatı", author_style_translated: "Akıcı", strategy_translated: "Sadakat",
@@ -203,6 +205,9 @@ export class GeminiTranslator {
 
     while (attempt <= maxRetries) {
         try {
+            // Eğer placeholder key ise direkt hata fırlat
+            if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("API_KEY_INVALID");
+
             let currentTemp = this.temperature;
             let repairLevel = 0; 
 
@@ -251,14 +256,14 @@ export class GeminiTranslator {
             lastError = error;
             const errMsg = error.message || "";
             
+            if (errMsg === "API_KEY_INVALID") throw error; // Loop kırma
+            
             // Kota hatası (429) durumunda "API_QUOTA_EXCEEDED" fırlat.
-            // Bu hata üst katmanda yakalanıp bekleme (wait) döngüsüne sokulacak.
             if (errMsg.includes('429')) throw new Error("API_QUOTA_EXCEEDED");
             
-            // Sadece anahtarın GEÇERSİZ olduğu durumlarda (400 Invalid Key) yönlendirme yap.
-            // 403, 500 gibi diğer hatalarda retry dene.
-            if ((errMsg.includes('API key') && errMsg.includes('not valid')) || apiKey === "AI_BROWSER_PLACEHOLDER_KEY") {
-                throw new Error("MISSING_KEY_REDIRECT");
+            // 400 Invalid Key hatası
+            if (errMsg.includes('API key') && errMsg.includes('not valid')) {
+                 throw new Error("API_KEY_INVALID");
             }
             
             attempt++;
@@ -266,8 +271,6 @@ export class GeminiTranslator {
         }
     }
     
-    // FALLBACK: Tüm denemeler başarısız olduysa, uygulamanın çökmesini engellemek için
-    // orijinal metni döndür ve devam et.
     console.warn("All translation attempts failed. Using original text as fallback.", trimmed);
     return trimmed; 
   }
