@@ -32,7 +32,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "YASAL SORUMLULUK REDDİ VE KULLANIM KOŞULLARI",
     legalWarningText: "Bu yazılım ('Araç'), kullanıcıların EPUB içeriklerini yerelleştirmesine olanak tanıyan deneysel bir yardımcı programdır. Kullanarak şunları kabul edersiniz:",
     legalPoints: ["Fikri Mülkiyet: Telif haklarından kullanıcı sorumludur.", "Kişisel Kullanım: Sadece kişisel ve eğitim amaçlıdır.", "Sorumluluk: Geliştiriciler veri kaybından sorumlu değildir.", "Onay: Kullanım, şartların kabulü anlamına gelir."],
-    getApiKeyLink: "Anahtar Alın"
+    getApiKeyLink: "Anahtar Alın", removeKey: "ANAHTARI SİL"
   },
   en: {
     historyTitle: "TRANSLATION HISTORY", clearHistory: "Clear All", noHistory: "No records",
@@ -66,7 +66,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "LEGAL DISCLAIMER & TERMS OF USE",
     legalWarningText: "This software ('Tool') is an experimental utility. By using it, you agree to:",
     legalPoints: ["IP: User is responsible for copyright compliance.", "Personal Use: Hobby or education only.", "Liability: Developers are not responsible for damages.", "Binding: Usage constitutes full consent."],
-    getApiKeyLink: "Get API Key"
+    getApiKeyLink: "Get API Key", removeKey: "REMOVE KEY"
   },
   fr: {
     historyTitle: "HISTORIQUE", clearHistory: "Tout effacer", noHistory: "Aucun enregistrement",
@@ -98,7 +98,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "MENTIONS LÉGALES ET CONDITIONS D'UTILISATION", 
     legalWarningText: "Ce logiciel ('Outil') est un utilitaire expérimental. En l'utilisant, vous acceptez :", 
     legalPoints: ["PI : L'utilisateur est responsable du respect des droits d'auteur.", "Usage personnel : Loisir ou éducation uniquement.", "Responsabilité : Les développeurs ne sont pas responsables des dommages.", "Engagement : L'utilisation vaut acceptation totale."],
-    getApiKeyLink: "Obtenir une clé"
+    getApiKeyLink: "Obtenir une clé", removeKey: "SUPPRIMER LA CLÉ"
   },
   de: {
     historyTitle: "VERLAUF", clearHistory: "Alles löschen", noHistory: "Keine Einträge",
@@ -130,7 +130,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "RECHTLICHER HINWEIS & NUTZUNGSBEDINGUNGEN", 
     legalWarningText: "Diese Software ('Tool') ist ein experimentelles Hilfsmittel. Mit der Nutzung stimmen Sie zu:", 
     legalPoints: ["IP: Der Benutzer ist für die Einhaltung des Urheberrechts verantwortlich.", "Persönlicher Gebrauch: Nur für Hobby oder Bildung.", "Haftung: Entwickler haften nicht für Schäden.", "Bindend: Die Nutzung gilt als volle Zustimmung."],
-    getApiKeyLink: "Schlüssel erhalten"
+    getApiKeyLink: "Schlüssel erhalten", removeKey: "SCHLÜSSEL LÖSCHEN"
   },
   es: {
     historyTitle: "HISTORIAL", clearHistory: "Borrar todo", noHistory: "Sin registros",
@@ -162,7 +162,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "AVISO LEGAL Y CONDICIONES DE USO", 
     legalWarningText: "Este software ('Herramienta') es una utilidad experimental. Al usarlo, aceptas:", 
     legalPoints: ["PI: El usuario es responsable del cumplimiento de los derechos de autor.", "Uso personal: Solo pasatiempo o educación.", "Responsabilidad: Los desarrolladores no son responsables de los daños.", "Vinculante: El uso constituye el consentimiento total."],
-    getApiKeyLink: "Obtener clave"
+    getApiKeyLink: "Obtener clave", removeKey: "ELIMINAR CLAVE"
   },
   it: {
     historyTitle: "CRONOLOGIA", clearHistory: "Cancella tutto", noHistory: "Nessun record",
@@ -194,7 +194,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "DISCLAIMER LEGALE E TERMINI DI UTILIZZO", 
     legalWarningText: "Questo software ('Strumento') è un'utility sperimentale. Usandolo, accetti:", 
     legalPoints: ["IP: L'utente è responsabile della conformità al copyright.", "Uso personale: Solo hobby o istruzione.", "Responsabilità: Gli sviluppatori non sono responsabili per i danni.", "Vincolante: L'uso costituisce pieno consenso."],
-    getApiKeyLink: "Ottieni chiave"
+    getApiKeyLink: "Ottieni chiave", removeKey: "RIMUOVI CHIAVE"
   },
   ru: {
     historyTitle: "ИСТОРИЯ", clearHistory: "Очистить всё", noHistory: "Нет записей",
@@ -226,7 +226,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "ПРАВОВОЙ ОТКАЗ И УСЛОВИЯ ИСПОЛЬЗОВАНИЯ", 
     legalWarningText: "Это программное обеспечение ('Инструмент') является экспериментальным. Используя его, вы соглашаетесь с:", 
     legalPoints: ["ИС: Пользователь несет ответственность за соблюдение авторских прав.", "Личное использование: Только хобби или образование.", "Ответственность: Разработчики не несут ответственности за ущерб.", "Обязательство: Использование означает полное согласие."],
-    getApiKeyLink: "Получить ключ"
+    getApiKeyLink: "Получить ключ", removeKey: "УДАЛИТЬ КЛЮЧ"
   },
   zh: {
     historyTitle: "历史记录", clearHistory: "全部清除", noHistory: "无记录",
@@ -258,7 +258,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "法律免责声明及使用条款", 
     legalWarningText: "本软件（'工具'）是一个实验性实用程序。使用即表示您同意：", 
     legalPoints: ["知识产权：用户负责遵守版权法。", "个人使用：仅限爱好或教育用途。", "责任：开发者不对任何损害负责。", "约束力：使用即构成完全同意。"],
-    getApiKeyLink: "获取密钥"
+    getApiKeyLink: "获取密钥", removeKey: "删除密钥"
   },
   ja: {
     historyTitle: "翻訳履歴", clearHistory: "すべて消去", noHistory: "履歴なし",
@@ -290,7 +290,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "法的免責事項および利用規約", 
     legalWarningText: "このソフトウェア（「ツール」）は実験的なユーティリティです。使用することにより、以下に同意したことになります：", 
     legalPoints: ["知的財産：著作権の遵守はユーザーの責任です。", "個人使用：趣味または教育目的のみ。", "責任：開発者は損害に対して責任を負いません。", "拘束力：使用は完全な同意とみなされます。"],
-    getApiKeyLink: "キーを取得"
+    getApiKeyLink: "キーを取得", removeKey: "キーを削除"
   },
   ko: {
     historyTitle: "번역 기록", clearHistory: "모두 지우기", noHistory: "기록 없음",
@@ -322,7 +322,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "법적 고지 및 이용 약관", 
     legalWarningText: "이 소프트웨어('도구')는 실험적인 유틸리티입니다. 이를 사용함으로써 귀하는 다음에 동의합니다:", 
     legalPoints: ["지적 재산권: 저작권 준수 책임은 사용자에게 있습니다.", "개인적 사용: 취미 또는 교육 목적으로만 사용하십시오.", "책임: 개발자는 손해에 대해 책임을 지지 않습니다.", "구속력: 사용은 완전한 동의를 의미합니다."],
-    getApiKeyLink: "키 받기"
+    getApiKeyLink: "키 받기", removeKey: "키 삭제"
   },
   ar: {
     historyTitle: "سجل الترجمة", clearHistory: "مسح الكل", noHistory: "لا توجد سجلات",
@@ -354,7 +354,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "إخلاء المسؤولية القانونية وشروط الاستخدام", 
     legalWarningText: "هذا البرنامج ('الأداة') هو أداة تجريبية. باستخدامك له، فإنك توافق على:", 
     legalPoints: ["الملكية الفكرية: المستخدم مسؤول عن الامتثال لحقوق النشر.", "الاستخدام الشخصي: للهواية أو التعليم فقط.", "المسؤولية: المطورون غير مسؤولين عن الأضرار.", "الإلزام: الاستخدام يشكل موافقة كاملة."],
-    getApiKeyLink: "احصل على المفتاح"
+    getApiKeyLink: "احصل على المفتاح", removeKey: "حذف المفتاح"
   },
   pt: {
     historyTitle: "HISTÓRICO", clearHistory: "Limpar tudo", noHistory: "Sem registros",
@@ -386,7 +386,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "AVISO LEGAL E TERMOS DE USO", 
     legalWarningText: "Este software ('Ferramenta') é um utilitário experimental. Ao usá-lo, você concorda com:", 
     legalPoints: ["PI: O usuário é responsável pela conformidade com os direitos autorais.", "Uso Pessoal: Apenas hobby ou educação.", "Responsabilidade: Os desenvolvedores não são responsáveis por danos.", "Vínculo: O uso constitui consentimento total."],
-    getApiKeyLink: "Obter chave"
+    getApiKeyLink: "Obter chave", removeKey: "REMOVER CHAVE"
   },
   nl: {
     historyTitle: "GESCHIEDENIS", clearHistory: "Alles wissen", noHistory: "Geen records",
@@ -418,7 +418,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "JURIDISCHE DISCLAIMER & GEBRUIKSVOORWAARDEN", 
     legalWarningText: "Deze software ('Tool') is een experimenteel hulpprogramma. Door het te gebruiken, gaat u akkoord met:", 
     legalPoints: ["IP: Gebruiker is verantwoordelijk voor naleving van auteursrechten.", "Persoonlijk gebruik: Alleen hobby of educatie.", "Aansprakelijkheid: Ontwikkelaars zijn niet verantwoordelijk voor schade.", "Bindend: Gebruik vormt volledige instemming."],
-    getApiKeyLink: "Sleutel ophalen"
+    getApiKeyLink: "Sleutel ophalen", removeKey: "SLEUTEL VERWIJDEREN"
   },
   pl: {
     historyTitle: "HISTORIA", clearHistory: "Wyczyść wszystko", noHistory: "Brak wpisów",
@@ -450,7 +450,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "ZASTRZEŻENIA PRAWNE I WARUNKI UŻYTKOWANIA", 
     legalWarningText: "To oprogramowanie ('Narzędzie') jest narzędziem eksperymentalnym. Korzystając z niego, zgadzasz się na:", 
     legalPoints: ["IP: Użytkownik odpowiada za przestrzeganie praw autorskich.", "Użytek osobisty: Tylko hobby lub edukacja.", "Odpowiedzialność: Deweloperzy nie odpowiadają za szkody.", "Wiążące: Użycie oznacza pełną zgodę."],
-    getApiKeyLink: "Pobierz klucz"
+    getApiKeyLink: "Pobierz klucz", removeKey: "USUŃ KLUCZ"
   },
   hi: {
     historyTitle: "इतिहास", clearHistory: "सभी साफ़ करें", noHistory: "कोई रिकॉर्ड नहीं",
@@ -482,7 +482,7 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "कानूनी अस्वीकरण और उपयोग की शर्तें", 
     legalWarningText: "यह सॉफ़्टवेयर ('टूल') एक प्रायोगिक उपयोगिता है। इसका उपयोग करके, आप सहमत हैं:", 
     legalPoints: ["IP: कॉपीराइट अनुपालन के लिए उपयोगकर्ता जिम्मेदार है.", "व्यक्तिगत उपयोग: केवल शौक या शिक्षा.", "दायित्व: डेवलपर्स नुकसान के लिए जिम्मेदार नहीं हैं.", "बाध्यकारी: उपयोग पूर्ण सहमति का गठन करता है."],
-    getApiKeyLink: "कुंजी प्राप्त करें"
+    getApiKeyLink: "कुंजी प्राप्त करें", removeKey: "कुंजी हटाएं"
   },
   vi: {
     historyTitle: "LỊCH SỬ", clearHistory: "Xóa tất cả", noHistory: "Không có dữ liệu",
@@ -514,6 +514,6 @@ export const STRINGS_UI: Record<string, any> = {
     legalWarningTitle: "TUYÊN BỐ MIỄN TRỪ TRÁCH NHIỆM & ĐIỀU KHOẢN SỬ DỤNG", 
     legalWarningText: "Phần mềm này ('Công cụ') là một tiện ích thử nghiệm. Bằng cách sử dụng nó, bạn đồng ý:", 
     legalPoints: ["SHTT: Người dùng chịu trách nhiệm tuân thủ bản quyền.", "Sử dụng cá nhân: Chỉ dành cho sở thích hoặc giáo dục.", "Trách nhiệm: Nhà phát triển không chịu trách nhiệm về thiệt hại.", "Ràng buộc: Việc sử dụng cấu thành sự đồng ý hoàn toàn."],
-    getApiKeyLink: "Lấy khóa"
+    getApiKeyLink: "Lấy khóa", removeKey: "XÓA KHÓA"
   }
 };
