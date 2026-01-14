@@ -10,7 +10,8 @@ export const getAnalysisPrompt = (
   uiLang: string,
   feedback?: string
 ): string => {
-  let prompt = `Perform a deep literary and structural analysis of this book for translation from ${sourceLanguage} to ${targetLanguage}.
+  // Flash Lite gibi modeller için daha belirgin ve basit JSON talimatı
+  let prompt = `You are a literary analyst. Analyze this book metadata to guide a translator from ${sourceLanguage} to ${targetLanguage}.
     
     METADATA:
     Title: ${metadata.title}
@@ -18,16 +19,33 @@ export const getAnalysisPrompt = (
     Description: ${metadata.description}
 
     TASK:
-    1. **Research & Style Analysis:** Search/Access your knowledge base regarding the author '${metadata.creator}' and their specific literary style in their native language.
-    2. **Target Adaptation:** Define how this specific author's voice/style should be adapted into ${targetLanguage}. The goal is to preserve the *effect* of the original style (e.g., irony, dryness, poetic flow) while making it sound authentic to a native ${targetLanguage} reader.
-    3. **Uncensored Strategy:** Ensure the strategy explicitly allows for raw, faithful, and uncensored translation if the source material contains gritty, explicit, or colloquial language. Do not sanitize the author's intent.`;
+    1. Identify the Genre (e.g. Sci-Fi, Romance).
+    2. Identify the Tone (e.g. Humorous, Dark).
+    3. Identify the Writing Style (e.g. Concise, Flowery).
+    4. Define a Translation Strategy.
+    5. Determine a Creativity Level (0.0 to 1.0).
+
+    OUTPUT FORMAT:
+    Return ONLY a valid JSON object. Do not use Markdown code blocks. Keys must be exactly as below:
+    {
+      "genre_en": "String (English)",
+      "tone_en": "String (English)",
+      "author_style_en": "String (English)",
+      "strategy_en": "String (English)",
+      "genre_translated": "String (Target Language)",
+      "tone_translated": "String (Target Language)",
+      "author_style_translated": "String (Target Language)",
+      "strategy_translated": "String (Target Language)",
+      "literary_fidelity_note": "String",
+      "detected_creativity_level": Number
+    }`;
 
   if (feedback) {
     prompt += `\n\nUSER FEEDBACK (CRITICAL): The user reviewed the previous analysis and provided this correction/guidance: "${feedback}". 
     ADJUST the genre, tone, and strategy based on this feedback.`;
   }
     
-  prompt += `\n\nReturn a JSON blueprint. All translated fields must be in the interface language: ${uiLang}.`;
+  prompt += `\n\nEnsure all "translated" fields are in the interface language: ${uiLang}.`;
   
   return prompt;
 };
@@ -56,17 +74,17 @@ export const getSystemInstruction = (
       modeInstruction = `1. **AUTHOR'S VOICE:** Recreate the specific voice analyzed above. Be faithful to the *effect* and *impact*.`;
   } else if (repairLevel === 1) {
       // REPAIR MODE (Strict)
-      modeInstruction = `1. **CORRECTION MODE:** You previously returned empty, repetitive, or incorrect output. 
-      - **DO NOT** loop or repeat words.
-      - **DO NOT** return the original text.
-      - Translate the meaning accurately and strictly into ${targetLanguage}.`;
+      modeInstruction = `1. **CORRECTION MODE (Force Translation):** 
+      - The previous output was rejected because it was untranslated or empty.
+      - **YOU MUST TRANSLATE** the text into ${targetLanguage}.
+      - Do not just copy the source text.`;
   } else {
       // LITERAL MODE (Emergency)
       modeInstruction = `1. **LITERAL EMERGENCY MODE:** 
-      - Forget the literary style. The previous translation failed. 
-      - TRANSLATE WORD-FOR-WORD OR SENTENCE-BY-SENTENCE. 
-      - Priority is conveying meaning, not style. 
-      - **ABSOLUTELY NO** repetitions or English output.`;
+      - Forget style. The previous translation failed. 
+      - TRANSLATE WORD-FOR-WORD. 
+      - **ABSOLUTELY NO** repetitions or English output.
+      - If the text is a proper noun, transliterate it if necessary, but prefer translation.`;
   }
 
   return `ACT AS AN EXPERT TRANSLATOR (${sourceLanguage} -> ${targetLanguage}).
@@ -88,7 +106,6 @@ ${modeInstruction}
    - **Bibliography/References:** 
      - KEEP Author names, Titles (if standard to keep them), and Years intact.
      - TRANSLATE descriptive terms like "edited by", "vol.", "retrieved from", "page".
-     - Do not try to "localize" the citation format itself, just the connecting words.
    - **Footnotes:** Translate the explanation text but KEEP the reference numbers/markers (e.g., [1], *, †) exactly as is.
 
 5. **ABSOLUTE PRESERVATION RULES (DO NOT TRANSLATE):**
@@ -96,9 +113,7 @@ ${modeInstruction}
    - **TABLES (<table>):** DO NOT TRANSLATE any content within table cells (<td>, <th>). Return the whole <table> block unchanged.
    - **IMAGES & GRAPHICS:** DO NOT TRANSLATE <img> alt text, <svg> content, or <figure> captions/content. Keep them 100% original.
 
-6. **OUTPUT RULES:**
-   - Return ONLY the translated string. No intro/outro.
-   - Do not output "The translation is:". Just the text.
-   - If the input is just a number or symbol, return it as is.
-   - **NEVER** return empty text.`;
+6. **VERIFICATION RULE:**
+   - **NEVER** return the input text exactly as is. You must translate it.
+   - Return ONLY the translated string. No intro/outro.`;
 };
