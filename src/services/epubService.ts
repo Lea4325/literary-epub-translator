@@ -247,10 +247,7 @@ export async function processEpub(
     try {
       strategy = await translator.analyzeBook(metadata, undefined, ui);
     } catch (err: any) {
-        // analyzeBook artık throw etmiyor (fallback dönüyor), 
-        // ama yine de dışarıdan bir hata gelirse yakala.
         console.warn("Analysis error caught in processEpub:", err);
-        // Fallback strateji oluştur (her ihtimale karşı)
         strategy = { 
             genre_en: "Literature", tone_en: "Narrative", author_style_en: "Fluid", strategy_en: "Fidelity",
             genre_translated: "Edebiyat", tone_translated: "Anlatı", author_style_translated: "Akıcı", strategy_translated: "Sadakat",
@@ -314,17 +311,13 @@ export async function processEpub(
             translatedNodes[path][nodeIdx] = trans;
             totalWords += (node.textContent || "").split(/\s+/).length;
           } catch (err: any) {
-            if (err.message === "TRANSLATION_SKIPPED_OR_INVALID") {
-                addLog(getLogStr(ui, 'repairing'), 'warning');
-                try {
-                    const repaired = await translator.translateSingle(original, true);
-                    node.innerHTML = repaired;
-                    translatedNodes[path][nodeIdx] = repaired;
-                } catch (repairErr: any) {
-                   addLog(getLogStr(ui, 'repairFailed'), 'error');
-                   node.innerHTML = original;
-                }
-            } else if (err.message === "API_QUOTA_EXCEEDED" || err.message?.includes('429')) {
+            // Doğrulama hatası (Model çeviri yapmadı, lazy çıktı verdi)
+            if (err.message && err.message.includes("VALIDATION_FAILED")) {
+                 addLog(getLogStr(ui, 'repairing'), 'warning');
+                 // translateSingle kendi içinde retry yapıyor ama yine de başarısız olursa
+                 // burada logluyoruz.
+            }
+            else if (err.message === "API_QUOTA_EXCEEDED" || err.message?.includes('429')) {
               // 429 Durumu: Kullanıcıyı bilgilendir ve bekle
               addLog(getLogStr(ui, 'quotaExceeded') || "Quota Limit! Waiting 60s...", 'warning');
               await new Promise(r => {
@@ -333,8 +326,6 @@ export async function processEpub(
               });
               nodeIdx--; continue; // Aynı node'u tekrar dene
             } else if (err.message === "API_KEY_INVALID") {
-              // Geçersiz anahtar hatası: Logla ve orijinal metni kullan.
-              // Kullanıcıyı ayarlara atmak yerine çeviriye (boş) devam et.
               console.warn("Translation failed due to invalid/missing key.");
               node.innerHTML = original;
             } else {
