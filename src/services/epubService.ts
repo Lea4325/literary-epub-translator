@@ -7,7 +7,7 @@ export interface TranslationProgress {
   currentFile: number;
   totalFiles: number;
   currentPercent: number;
-  status: 'idle' | 'processing' | 'completed' | 'error' | 'analyzing' | 'resuming';
+  status: 'idle' | 'processing' | 'completed' | 'error' | 'analyzing' | 'resuming' | 'waiting';
   logs: LogEntry[];
   etaSeconds?: number;
   strategy?: BookStrategy;
@@ -18,6 +18,7 @@ export interface TranslationProgress {
   lastNodeIndex?: number;
   translatedNodes?: Record<string, string[]>;
   totalProcessedSentences?: number;
+  waitCountdown?: number; // Kota beklemesi için geri sayım
 }
 
 function getLogStr(uiLang: string, key: string): string {
@@ -25,29 +26,19 @@ function getLogStr(uiLang: string, key: string): string {
   return bundle[key] || STRINGS_LOGS['en'][key];
 }
 
-/**
- * Metindeki cümle sayısını hesaplar.
- * İlerleme çubuğu için tutarlı bir metrik sağlar.
- */
 export function countSentences(text: string): number {
     if (!text || !text.trim()) return 0;
-    // Basit cümle sayımı: . ! ? ile bitenler veya yeni satırlar.
-    // HTML taglerini temizle
     const cleanText = text.replace(/<[^>]*>/g, ' ').trim();
     if (cleanText.length === 0) return 0;
-    
     const matches = cleanText.match(/[.!?]+/g);
-    // Hiç noktalama yoksa ama metin varsa en az 1 cümle say.
     return matches ? matches.length : 1;
 }
 
-// İstatistik Hesaplama Fonksiyonu
 export async function calculateEpubStats(file: File, targetTags: string[], hasUserKey: boolean): Promise<BookStats> {
   const epubBuffer = await file.arrayBuffer();
   const epubZip = await new JSZip().loadAsync(epubBuffer);
   const parser = new DOMParser();
 
-  // OPF Bulma (Dosya listesi için)
   const containerXml = await epubZip.file("META-INF/container.xml")?.async("string");
   const containerDoc = parser.parseFromString(containerXml || "", "application/xml");
   const opfPath = containerDoc.querySelector("rootfile")?.getAttribute("full-path") || "";
@@ -61,7 +52,6 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
 
   const spineItems = Array.from(opfDoc.querySelectorAll("spine > itemref"));
   
-  // HTML Dosyalarını Listele
   const processList = spineItems.map(item => {
     const href = idToHref[item.getAttribute("idref") || ""];
     const path = opfFolder ? `${opfFolder}/${href}` : href;
@@ -73,7 +63,6 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
   let totalSentences = 0;
   const fileSentenceCounts: number[] = [];
 
-  // Tüm dosyaları hızlıca tara
   for (const path of processList) {
     const content = await epubZip.file(path)?.async("string");
     if (!content) {
@@ -81,7 +70,6 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
         continue;
     }
     
-    // Sadece hedef taglerin içindeki metni say
     const doc = parser.parseFromString(content, "text/html");
     const nodes = Array.from(doc.querySelectorAll(targetTags.join(',')));
     
@@ -101,21 +89,9 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
     fileSentenceCounts.push(fileSentences);
   }
 
-  // Tahminler
-  // 1 Token ~= 4 Char
   const estimatedTokens = Math.ceil(totalChars / 3.5); 
-  
-  // Tahmini İstek Sayısı (Chunk)
-  // Gemini'ye her paragraf/node ayrı gidiyor varsayımıyla veya birleştirilmiş chunklar:
-  // Ortalama chunk büyüklüğü ~500 karakter diyelim (Daha güvenli bir tahmin)
   const estimatedChunks = Math.ceil(totalChars / 500); 
-
-  // Süre Hesaplaması
-  // Free: Teorik limit 15 RPM. 
-  // Ancak 429 hataları ve bekleme süreleri (60s) ile efektif hız daha düşüktür.
-  // Güvenli çarpan: 10 RPM
   const durationFree = Math.ceil(estimatedChunks / 10); 
-  // Paid: ~30-40 RPM
   const durationPro = Math.ceil(estimatedChunks / 35); 
 
   return {
@@ -126,7 +102,7 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
     estimatedChunks,
     estimatedDurationFree: Math.max(1, durationFree), 
     estimatedDurationPro: Math.max(1, durationPro),
-    fileSentenceCounts // İlerleme çubuğu hassasiyeti için eklendi
+    fileSentenceCounts 
   };
 }
 
@@ -162,7 +138,7 @@ export async function processEpub(
   signal: AbortSignal,
   resumeFrom?: ResumeInfo,
   precomputedStrategy?: BookStrategy,
-  precomputedStats?: BookStats // İlerleme çubuğu için gerekli
+  precomputedStats?: BookStats 
 ): Promise<{ epubBlob: Blob }> {
   const ui = settings.uiLang;
   const translator = new GeminiTranslator(settings.temperature, settings.sourceLanguage, settings.targetLanguage, settings.modelId);
@@ -171,9 +147,6 @@ export async function processEpub(
 
   let totalWords = 0;
   let processedFilesCount = resumeFrom ? resumeFrom.zipPathIndex : 0;
-  
-  // Eğer resume bilgisinde kayıtlı cümle sayısı varsa onu kullan, yoksa 0'dan başla.
-  // Bu, progress barın kaldığı yerden doğru şekilde devam etmesini sağlar.
   let accumulatedSentences = resumeFrom && resumeFrom.totalProcessedSentences ? resumeFrom.totalProcessedSentences : 0;
   
   let processList: string[] = [];
@@ -184,19 +157,15 @@ export async function processEpub(
     { timestamp: new Date().toLocaleTimeString(), text: getLogStr(ui, 'analyzing'), type: 'info' }
   ];
 
-  // Toplam cümle sayısı bilgisi varsa progress bar daha hassas çalışır.
   const totalBookSentences = precomputedStats?.totalSentences || 0;
+  let totalWaitTimeMs = 0; // Toplam bekleme süresi (Hız hesaplamasından düşmek için)
+  const startTime = Date.now();
 
   const triggerProgress = (updates: Partial<TranslationProgress>) => {
-    // Yüzde Hesabı:
-    // Eğer toplam cümle sayısı biliniyorsa: (İşlenen Cümle / Toplam Cümle) * 100
-    // Bilinmiyorsa (Analiz atlandıysa): Dosya bazlı kaba tahmin.
     let percent = 0;
-    
     if (totalBookSentences > 0) {
         percent = Math.min(99, Math.round((accumulatedSentences / totalBookSentences) * 100));
     } else {
-        // Fallback: Dosya bazlı hesaplama (Eski yöntem)
         percent = processList.length > 0 ? Math.round((processedFilesCount / processList.length) * 100) : 0;
     }
 
@@ -204,7 +173,7 @@ export async function processEpub(
       currentFile: processedFilesCount,
       totalFiles: processList.length || 0,
       currentPercent: percent,
-      status: 'processing',
+      status: updates.status || 'processing',
       logs: [...cumulativeLogs],
       strategy,
       usage: translator.getUsage(),
@@ -221,7 +190,6 @@ export async function processEpub(
     triggerProgress({});
   };
 
-  // --- FREE TIER PACING (THROTTLING) ---
   const isFreeTier = !settings.hasPaidKey && (settings.modelId === 'gemini-flash-lite-latest' || settings.modelId === 'gemini-2.0-flash-lite-preview');
   const minInterval = isFreeTier ? 4000 : 0; 
   
@@ -272,9 +240,7 @@ export async function processEpub(
   }).filter(p => epubZip.file(p)) as string[];
 
   addLog(getLogStr(ui, 'found').replace('{0}', processList.length.toString()), 'success');
-  const startTime = Date.now();
 
-  // --- ÇEVİRİ DÖNGÜSÜ ---
   for (let zipIdx = processedFilesCount; zipIdx < processList.length; zipIdx++) {
     const path = processList[zipIdx];
     if (signal.aborted) throw new Error("Stopped.");
@@ -294,12 +260,10 @@ export async function processEpub(
         if (signal.aborted) throw new Error("Stopped.");
         
         const stepStart = Date.now(); 
-        
         const node = nodes[nodeIdx];
         const original = node.innerHTML.trim();
         if (!original) continue;
 
-        // Cümle sayısını al (İlerleme çubuğu için)
         const nodeSentences = countSentences(original);
 
         if (translatedNodes[path][nodeIdx]) {
@@ -311,20 +275,50 @@ export async function processEpub(
             translatedNodes[path][nodeIdx] = trans;
             totalWords += (node.textContent || "").split(/\s+/).length;
           } catch (err: any) {
-            // Doğrulama hatası (Model çeviri yapmadı, lazy çıktı verdi)
             if (err.message && err.message.includes("VALIDATION_FAILED")) {
                  addLog(getLogStr(ui, 'repairing'), 'warning');
-                 // translateSingle kendi içinde retry yapıyor ama yine de başarısız olursa
-                 // burada logluyoruz.
             }
             else if (err.message === "API_QUOTA_EXCEEDED" || err.message?.includes('429')) {
-              // 429 Durumu: Kullanıcıyı bilgilendir ve bekle
-              addLog(getLogStr(ui, 'quotaExceeded') || "Quota Limit! Waiting 60s...", 'warning');
-              await new Promise(r => {
-                const timeout = setTimeout(r, 65000); // 65 saniye güvenli bekleme
-                signal.addEventListener('abort', () => clearTimeout(timeout));
-              });
-              nodeIdx--; continue; // Aynı node'u tekrar dene
+              // 429 Durumu: Akıllı Geri Sayım
+              // Bu blokta 65 saniye boyunca döngü kurup her saniye UI güncelleyeceğiz.
+              const waitSeconds = 65;
+              addLog(getLogStr(ui, 'quotaExceeded'), 'warning');
+              
+              for (let i = waitSeconds; i > 0; i--) {
+                  if (signal.aborted) break;
+                  
+                  // Aktif işleme süresi (toplam süre - bekleme süresi)
+                  const currentActiveTimeMs = (Date.now() - startTime) - totalWaitTimeMs;
+                  const activeSeconds = Math.max(1, currentActiveTimeMs / 1000);
+                  const wps = totalWords / activeSeconds;
+                  
+                  // ETA Hesabı: (Kalan Cümle * Cümle Başına Süre) + (Şu anki Geri Sayım)
+                  // Bekleme anında ETA'nın artması normaldir.
+                  let tempEta = 0;
+                  if (totalBookSentences > 0) {
+                      const avgTimePerSentence = activeSeconds / (Math.max(1, accumulatedSentences - (resumeFrom?.totalProcessedSentences || 0)));
+                      const remainingSentences = totalBookSentences - accumulatedSentences;
+                      tempEta = Math.round(remainingSentences * avgTimePerSentence);
+                  }
+                  
+                  // Kullanıcıya "Bekliyorum... X sn" göster
+                  triggerProgress({
+                      status: 'waiting',
+                      waitCountdown: i,
+                      etaSeconds: tempEta + i, // Kalan süreye bekleme süresini ekle
+                      wordsPerSecond: wps
+                  });
+                  
+                  await new Promise(r => setTimeout(r, 1000));
+                  totalWaitTimeMs += 1000;
+              }
+              
+              if (signal.aborted) throw new Error("Stopped.");
+              
+              // Geri sayım bitti, aynı node'u tekrar dene
+              nodeIdx--; 
+              continue; 
+              
             } else if (err.message === "API_KEY_INVALID") {
               console.warn("Translation failed due to invalid/missing key.");
               node.innerHTML = original;
@@ -335,41 +329,46 @@ export async function processEpub(
           }
         }
         
-        // Cümle sayısını güncelle
         accumulatedSentences += nodeSentences;
 
         const stepEnd = Date.now();
         const elapsed = stepEnd - stepStart;
 
-        // SMART THROTTLING
+        // SMART THROTTLING (Ücretsiz Mod Hız Sınırı)
         if (isFreeTier && minInterval > 0) {
             const delay = Math.max(0, minInterval - elapsed);
             if (delay > 0) {
                  await new Promise(r => setTimeout(r, delay));
+                 // Bu "kasıtlı" yavaşlatmayı bekleme süresi olarak saymıyoruz, 
+                 // çünkü bu işlem hızının bir parçası.
             }
         }
         
-        const totalElapsed = (Date.now() - startTime) / 1000;
+        // Hız ve ETA Hesaplama
+        const currentActiveTimeMs = (Date.now() - startTime) - totalWaitTimeMs;
+        const activeSeconds = Math.max(0.1, currentActiveTimeMs / 1000);
+        const wps = totalWords / activeSeconds;
         
-        // Kalan Süre (ETA) Hesabı
         let eta = 0;
         if (totalBookSentences > 0 && accumulatedSentences > 10) {
-            const avgTimePerSentence = totalElapsed / (accumulatedSentences - (resumeFrom?.totalProcessedSentences || 0));
+            const avgTimePerSentence = activeSeconds / (accumulatedSentences - (resumeFrom?.totalProcessedSentences || 0));
             const remainingSentences = totalBookSentences - accumulatedSentences;
             eta = Math.max(0, Math.round(remainingSentences * avgTimePerSentence));
         } else {
              const currentProgressFrac = (zipIdx + (nodeIdx / nodes.length)) / processList.length;
              if(currentProgressFrac > 0.01) {
-                const totalTime = totalElapsed / currentProgressFrac;
-                eta = Math.max(0, Math.round(totalTime - totalElapsed));
+                const totalEstimatedTime = activeSeconds / currentProgressFrac;
+                eta = Math.max(0, Math.round(totalEstimatedTime - activeSeconds));
              }
         }
 
         triggerProgress({
-            wordsPerSecond: totalWords / totalElapsed,
+            wordsPerSecond: wps,
             etaSeconds: eta,
             lastZipPathIndex: zipIdx,
-            lastNodeIndex: nodeIdx
+            lastNodeIndex: nodeIdx,
+            status: 'processing',
+            waitCountdown: undefined // Geri sayımı temizle
         });
       }
       
