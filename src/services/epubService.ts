@@ -152,14 +152,7 @@ export async function analyzeEpubOnly(
     description: opfDoc.querySelector("dc\\:description, description")?.textContent || "",
   };
 
-  try {
-    return await translator.analyzeBook(metadata, undefined, settings.uiLang, feedback);
-  } catch (err: any) {
-    if (err.message === "QUOTA_EXHAUSTED_DURING_ANALYSIS") {
-      throw new Error("ANALYSIS_QUOTA_ERROR");
-    }
-    throw err;
-  }
+  return await translator.analyzeBook(metadata, undefined, settings.uiLang, feedback);
 }
 
 export async function processEpub(
@@ -254,11 +247,15 @@ export async function processEpub(
     try {
       strategy = await translator.analyzeBook(metadata, undefined, ui);
     } catch (err: any) {
-      if (err.message === "QUOTA_EXHAUSTED_DURING_ANALYSIS") {
-        addLog(getLogStr(ui, 'noQuota'), 'error');
-        throw new Error("INSUFFICIENT_TOKENS_FOR_ANALYSIS");
-      }
-      throw err;
+        // analyzeBook artık throw etmiyor (fallback dönüyor), 
+        // ama yine de dışarıdan bir hata gelirse yakala.
+        console.warn("Analysis error caught in processEpub:", err);
+        // Fallback strateji oluştur (her ihtimale karşı)
+        strategy = { 
+            genre_en: "Literature", tone_en: "Narrative", author_style_en: "Fluid", strategy_en: "Fidelity",
+            genre_translated: "Edebiyat", tone_translated: "Anlatı", author_style_translated: "Akıcı", strategy_translated: "Sadakat",
+            literary_fidelity_note: "Emergency Fallback", detected_creativity_level: 0.3, isFallback: true 
+        };
     }
   } else {
     addLog(getLogStr(ui, 'preComputed'), 'success');
@@ -335,6 +332,11 @@ export async function processEpub(
                 signal.addEventListener('abort', () => clearTimeout(timeout));
               });
               nodeIdx--; continue; // Aynı node'u tekrar dene
+            } else if (err.message === "API_KEY_INVALID") {
+              // Geçersiz anahtar hatası: Logla ve orijinal metni kullan.
+              // Kullanıcıyı ayarlara atmak yerine çeviriye (boş) devam et.
+              console.warn("Translation failed due to invalid/missing key.");
+              node.innerHTML = original;
             } else {
                 console.error("Critical node translation error:", err);
                 node.innerHTML = original;
@@ -359,14 +361,12 @@ export async function processEpub(
         const totalElapsed = (Date.now() - startTime) / 1000;
         
         // Kalan Süre (ETA) Hesabı
-        // Artık cümle bazlı hesaplayabiliriz ki bu çok daha doğru olur.
         let eta = 0;
         if (totalBookSentences > 0 && accumulatedSentences > 10) {
             const avgTimePerSentence = totalElapsed / (accumulatedSentences - (resumeFrom?.totalProcessedSentences || 0));
             const remainingSentences = totalBookSentences - accumulatedSentences;
             eta = Math.max(0, Math.round(remainingSentences * avgTimePerSentence));
         } else {
-             // Fallback ETA
              const currentProgressFrac = (zipIdx + (nodeIdx / nodes.length)) / processList.length;
              if(currentProgressFrac > 0.01) {
                 const totalTime = totalElapsed / currentProgressFrac;
