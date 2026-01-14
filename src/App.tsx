@@ -214,11 +214,17 @@ export default function App() {
   const handleAnalyzeAndStats = async () => {
     if (!file) return;
 
-    const currentModel = AI_MODELS.find(m => m.id === settings.modelId);
+    let effectiveModelId = settings.modelId;
+    const currentModel = AI_MODELS.find(m => m.id === effectiveModelId);
+
+    // KOTA VE MODEL KONTROLÜ (AUTO-DOWNGRADE)
+    // Eğer kullanıcı kilitli bir model seçmişse (ör: Gemini 3 Pro) ama anahtarı yoksa,
+    // hata verip durmak yerine otomatik olarak ÜCRETSİZ modele (Flash Lite) geç ve devam et.
     if (currentModel?.locked && !hasPaidKey) {
-         setError({ title: t.error, message: t.billingInfo });
-         setIsRightDrawerOpen(true);
-         return;
+         effectiveModelId = 'gemini-flash-lite-latest';
+         setSettings(prev => ({ ...prev, modelId: effectiveModelId }));
+         // Kullanıcıya sessizce geçiş yapıldığını hissettirmeden devam et
+         // veya istenirse bir toast mesajı eklenebilir.
     }
 
     setIsAnalyzing(true);
@@ -226,13 +232,16 @@ export default function App() {
     setBookStats(null);
     
     try {
+      // effectiveModelId kullanarak ayarları oluştur
+      const effectiveSettings = { ...settings, modelId: effectiveModelId, uiLang, hasPaidKey };
+
       const [strategy, stats] = await Promise.all([
-          analyzeEpubOnly(file, { ...settings, uiLang, hasPaidKey }),
+          analyzeEpubOnly(file, effectiveSettings),
           calculateEpubStats(file, settings.targetTags, hasPaidKey)
       ]);
       
       setProgress(prev => ({ ...prev, strategy: strategy }));
-      setAnalyzedModelId(settings.modelId || 'unknown');
+      setAnalyzedModelId(effectiveModelId || 'unknown');
       setBookStats(stats);
       
       if (strategy && strategy.detected_creativity_level) {
@@ -258,6 +267,7 @@ export default function App() {
     if (!file) return;
     setIsAnalyzing(true);
     try {
+      // Yeniden analizde de mevcut geçerli model ID'sini kullan
       const strategy = await analyzeEpubOnly(file, { ...settings, uiLang, hasPaidKey }, feedback);
       setProgress(prev => ({ ...prev, strategy: strategy }));
       if (strategy && strategy.detected_creativity_level) {
@@ -278,11 +288,14 @@ export default function App() {
   const startTranslation = async (isResuming = false) => {
     if (!file) return;
 
-    const currentModel = AI_MODELS.find(m => m.id === settings.modelId);
+    // START TUŞUNA BASILDIĞINDA DA MODEL KONTROLÜ YAP
+    let effectiveModelId = settings.modelId;
+    const currentModel = AI_MODELS.find(m => m.id === effectiveModelId);
+    
+    // Eğer resume ediliyorsa ayarlardaki modelden devam et, ama kilitliyse ve key yoksa düşür
     if (currentModel?.locked && !hasPaidKey) {
-         setError({ title: t.error, message: t.billingInfo });
-         setIsRightDrawerOpen(true);
-         return;
+        effectiveModelId = 'gemini-flash-lite-latest';
+        setSettings(prev => ({ ...prev, modelId: effectiveModelId }));
     }
 
     setIsProcessing(true);
@@ -291,9 +304,10 @@ export default function App() {
     
     abortControllerRef.current = new AbortController();
     try {
+      // Resume durumunda kaydedilen ayarları kullan ama güncel Key durumunu ve modeli zorla
       const effectiveSettings = isResuming && resumeData 
-        ? { ...resumeData.settings, hasPaidKey } 
-        : { ...settings, uiLang, hasPaidKey };
+        ? { ...resumeData.settings, hasPaidKey, modelId: hasPaidKey ? resumeData.settings.modelId : effectiveModelId } 
+        : { ...settings, modelId: effectiveModelId, uiLang, hasPaidKey };
 
       const { epubBlob } = await processEpub(
         file, 
@@ -304,7 +318,7 @@ export default function App() {
                const recommendedTemp = p.strategy.detected_creativity_level;
                setSettings(s => ({ ...s, temperature: recommendedTemp }));
                setIsCreativityOptimized(true);
-               setAnalyzedModelId(settings.modelId || null);
+               setAnalyzedModelId(effectiveSettings.modelId || null);
             }
             return { ...p, logs: p.logs.length > 0 ? p.logs : prev.logs };
           });
@@ -314,7 +328,7 @@ export default function App() {
                  zipPathIndex: p.lastZipPathIndex, 
                  nodeIndex: p.lastNodeIndex, 
                  translatedNodes: p.translatedNodes, 
-                 settings: settings,
+                 settings: effectiveSettings,
                  totalProcessedSentences: p.totalProcessedSentences 
              };
              localStorage.setItem(STORAGE_KEY_RESUME, JSON.stringify(res));
@@ -327,7 +341,7 @@ export default function App() {
       );
       setDownloadUrl(URL.createObjectURL(epubBlob));
 
-      const newHistoryItem: HistoryItem = { id: Date.now().toString(), filename: file.name, sourceLang: settings.sourceLanguage, targetLang: settings.targetLanguage, modelId: settings.modelId || 'gemini', timestamp: new Date().toLocaleString(), status: 'completed', settingsSnapshot: { ...settings } };
+      const newHistoryItem: HistoryItem = { id: Date.now().toString(), filename: file.name, sourceLang: settings.sourceLanguage, targetLang: settings.targetLanguage, modelId: effectiveModelId || 'gemini', timestamp: new Date().toLocaleString(), status: 'completed', settingsSnapshot: { ...effectiveSettings } };
       const updatedHistory = [newHistoryItem, ...history].slice(0, 20);
       setHistory(updatedHistory);
       localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(updatedHistory));
