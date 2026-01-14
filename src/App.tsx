@@ -181,9 +181,18 @@ export default function App() {
         localStorage.setItem(STORAGE_KEY_API, finalKey);
         setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
       }
-    } catch {
-      setHasPaidKey(false);
-      setError({ title: t.error, message: t.verifyingError });
+    } catch (e: any) {
+      // ÖNEMLİ: Eğer hata 429 ise, anahtar geçerlidir ama kota doludur. 
+      // Yine de anahtarı geçerli saymalıyız ki kullanıcı devam edebilsin.
+      if (e.message?.includes('429')) {
+         setHasPaidKey(false); // Ücretsiz mod olarak işaretle (genelde 429 ücretsizlerde olur)
+         (window as any).manualApiKey = finalKey;
+         localStorage.setItem(STORAGE_KEY_API, finalKey);
+         setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
+      } else {
+         setHasPaidKey(false);
+         setError({ title: t.error, message: t.verifyingError });
+      }
     } finally { setIsVerifying(false); }
   };
 
