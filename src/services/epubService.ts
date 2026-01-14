@@ -17,11 +17,28 @@ export interface TranslationProgress {
   lastZipPathIndex?: number;
   lastNodeIndex?: number;
   translatedNodes?: Record<string, string[]>;
+  totalProcessedSentences?: number;
 }
 
 function getLogStr(uiLang: string, key: string): string {
   const bundle = STRINGS_LOGS[uiLang] || STRINGS_LOGS['en'];
   return bundle[key] || STRINGS_LOGS['en'][key];
+}
+
+/**
+ * Metindeki cümle sayısını hesaplar.
+ * İlerleme çubuğu için tutarlı bir metrik sağlar.
+ */
+export function countSentences(text: string): number {
+    if (!text || !text.trim()) return 0;
+    // Basit cümle sayımı: . ! ? ile bitenler veya yeni satırlar.
+    // HTML taglerini temizle
+    const cleanText = text.replace(/<[^>]*>/g, ' ').trim();
+    if (cleanText.length === 0) return 0;
+    
+    const matches = cleanText.match(/[.!?]+/g);
+    // Hiç noktalama yoksa ama metin varsa en az 1 cümle say.
+    return matches ? matches.length : 1;
 }
 
 // İstatistik Hesaplama Fonksiyonu
@@ -54,27 +71,34 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
   let totalChars = 0;
   let totalWords = 0;
   let totalSentences = 0;
+  const fileSentenceCounts: number[] = [];
 
   // Tüm dosyaları hızlıca tara
   for (const path of processList) {
     const content = await epubZip.file(path)?.async("string");
-    if (!content) continue;
+    if (!content) {
+        fileSentenceCounts.push(0);
+        continue;
+    }
     
     // Sadece hedef taglerin içindeki metni say
     const doc = parser.parseFromString(content, "text/html");
     const nodes = Array.from(doc.querySelectorAll(targetTags.join(',')));
     
+    let fileSentences = 0;
     nodes.forEach(node => {
-        const text = node.textContent || "";
-        const cleanText = text.trim();
-        if (cleanText.length > 0) {
+        const text = node.innerHTML.trim();
+        if (text.length > 0) {
+            const cleanText = node.textContent || "";
             totalChars += cleanText.length;
             totalWords += cleanText.split(/\s+/).length;
-            // Basit cümle sayımı (. ! ? ile bitenler)
-            const sentences = cleanText.match(/[.!?]+/g);
-            totalSentences += sentences ? sentences.length : 1;
+            
+            const sCount = countSentences(text);
+            fileSentences += sCount;
+            totalSentences += sCount;
         }
     });
+    fileSentenceCounts.push(fileSentences);
   }
 
   // Tahminler
@@ -87,19 +111,9 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
   const estimatedChunks = Math.ceil(totalChars / 500); 
 
   // Süre Hesaplaması
-  
-  // 1. FREE MODE (Anahtarsız):
-  // Google Gemini Free Tier Limitleri: 15 RPM (Dakikada 15 istek).
-  // Bu durumda her 4 saniyede 1 istek atabiliriz.
-  // Ek olarak latency süresi var.
-  // Süre (dk) = (Chunk Sayısı / 15)
+  // Free: 15 RPM
   const durationFree = Math.ceil(estimatedChunks / 15); 
-  
-  // 2. PAID/KEY MODE (Anahtarlı):
-  // Kişisel API Key limitleri çok daha yüksektir (örn: 2000 RPM).
-  // Burada sınırlayıcı faktör ağ gecikmesi ve modelin üretim hızıdır.
-  // Ortalama bir istek 1.5 - 2 saniye sürer.
-  // Dakikada yaklaşık 30-40 istek işlenebilir (paralel olmasa bile).
+  // Paid: ~30-40 RPM
   const durationPro = Math.ceil(estimatedChunks / 30); 
 
   return {
@@ -108,10 +122,9 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
     totalSentences,
     estimatedTokens,
     estimatedChunks,
-    // Eğer kullanıcının anahtarı yoksa (hasUserKey = false), "tahmini süre" olarak uzun olanı göster.
-    // Eğer varsa kısa olanı göster. Ancak biz burada ham verileri dönüyoruz, UI karar verecek.
     estimatedDurationFree: Math.max(1, durationFree), 
-    estimatedDurationPro: Math.max(1, durationPro)
+    estimatedDurationPro: Math.max(1, durationPro),
+    fileSentenceCounts // İlerleme çubuğu hassasiyeti için eklendi
   };
 }
 
@@ -153,7 +166,8 @@ export async function processEpub(
   onProgress: (progress: TranslationProgress) => void,
   signal: AbortSignal,
   resumeFrom?: ResumeInfo,
-  precomputedStrategy?: BookStrategy
+  precomputedStrategy?: BookStrategy,
+  precomputedStats?: BookStats // İlerleme çubuğu için gerekli
 ): Promise<{ epubBlob: Blob }> {
   const ui = settings.uiLang;
   const translator = new GeminiTranslator(settings.temperature, settings.sourceLanguage, settings.targetLanguage, settings.modelId);
@@ -162,6 +176,11 @@ export async function processEpub(
 
   let totalWords = 0;
   let processedFilesCount = resumeFrom ? resumeFrom.zipPathIndex : 0;
+  
+  // Eğer resume bilgisinde kayıtlı cümle sayısı varsa onu kullan, yoksa 0'dan başla.
+  // Bu, progress barın kaldığı yerden doğru şekilde devam etmesini sağlar.
+  let accumulatedSentences = resumeFrom && resumeFrom.totalProcessedSentences ? resumeFrom.totalProcessedSentences : 0;
+  
   let processList: string[] = [];
   const translatedNodes: Record<string, string[]> = resumeFrom ? { ...resumeFrom.translatedNodes } : {};
   let strategy: BookStrategy | undefined = precomputedStrategy;
@@ -170,17 +189,33 @@ export async function processEpub(
     { timestamp: new Date().toLocaleTimeString(), text: getLogStr(ui, 'analyzing'), type: 'info' }
   ];
 
+  // Toplam cümle sayısı bilgisi varsa progress bar daha hassas çalışır.
+  const totalBookSentences = precomputedStats?.totalSentences || 0;
+
   const triggerProgress = (updates: Partial<TranslationProgress>) => {
+    // Yüzde Hesabı:
+    // Eğer toplam cümle sayısı biliniyorsa: (İşlenen Cümle / Toplam Cümle) * 100
+    // Bilinmiyorsa (Analiz atlandıysa): Dosya bazlı kaba tahmin.
+    let percent = 0;
+    
+    if (totalBookSentences > 0) {
+        percent = Math.min(99, Math.round((accumulatedSentences / totalBookSentences) * 100));
+    } else {
+        // Fallback: Dosya bazlı hesaplama (Eski yöntem)
+        percent = processList.length > 0 ? Math.round((processedFilesCount / processList.length) * 100) : 0;
+    }
+
     onProgress({
       currentFile: processedFilesCount,
       totalFiles: processList.length || 0,
-      currentPercent: processList.length > 0 ? Math.round((processedFilesCount / processList.length) * 100) : 0,
+      currentPercent: percent,
       status: 'processing',
       logs: [...cumulativeLogs],
       strategy,
       usage: translator.getUsage(),
       totalProcessedWords: totalWords,
       translatedNodes,
+      totalProcessedSentences: accumulatedSentences,
       ...updates
     });
   };
@@ -190,6 +225,14 @@ export async function processEpub(
     if (cumulativeLogs.length > 50) cumulativeLogs.shift();
     triggerProgress({});
   };
+
+  // --- FREE TIER PACING (THROTTLING) ---
+  const isFreeTier = !settings.hasPaidKey && (settings.modelId === 'gemini-flash-lite-latest' || settings.modelId === 'gemini-2.0-flash-lite-preview');
+  const minInterval = isFreeTier ? 4000 : 0; 
+  
+  if (isFreeTier) {
+      addLog(getLogStr(ui, 'freeTierActive') || "Free Tier Pacing Active (15 RPM)...", 'warning');
+  }
 
   const containerXml = await epubZip.file("META-INF/container.xml")?.async("string");
   const parser = new DOMParser();
@@ -253,9 +296,15 @@ export async function processEpub(
 
       for (let nodeIdx = startNodeIdx; nodeIdx < nodes.length; nodeIdx++) {
         if (signal.aborted) throw new Error("Stopped.");
+        
+        const stepStart = Date.now(); 
+        
         const node = nodes[nodeIdx];
         const original = node.innerHTML.trim();
         if (!original) continue;
+
+        // Cümle sayısını al (İlerleme çubuğu için)
+        const nodeSentences = countSentences(original);
 
         if (translatedNodes[path][nodeIdx]) {
           node.innerHTML = translatedNodes[path][nodeIdx];
@@ -278,14 +327,11 @@ export async function processEpub(
                 }
             } else if (err.message === "API_QUOTA_EXCEEDED" || err.message?.includes('429')) {
               addLog(getLogStr(ui, 'quotaExceeded'), 'warning');
-              // KOTA AŞIMI BEKLEMESİ (Rate Limit Backoff)
-              // Ücretsiz modda 15 RPM = 60/15 = 4sn. Ancak güvenli olması için biraz daha uzun beklenebilir.
-              // Eğer hata aldıysak, Google bizi bloklamış demektir, 60s beklemek en güvenlisidir.
               await new Promise(r => {
                 const timeout = setTimeout(r, 65000);
                 signal.addEventListener('abort', () => clearTimeout(timeout));
               });
-              nodeIdx--; continue; // Düğümü tekrar dene
+              nodeIdx--; continue; 
             } else {
                 console.error("Critical node translation error:", err);
                 node.innerHTML = original;
@@ -293,17 +339,40 @@ export async function processEpub(
           }
         }
         
-        const elapsed = (Date.now() - startTime) / 1000;
-        const currentProgressFrac = (zipIdx + (nodeIdx / nodes.length)) / processList.length;
+        // Cümle sayısını güncelle
+        accumulatedSentences += nodeSentences;
+
+        const stepEnd = Date.now();
+        const elapsed = stepEnd - stepStart;
+
+        // SMART THROTTLING
+        if (isFreeTier && minInterval > 0) {
+            const delay = Math.max(0, minInterval - elapsed);
+            if (delay > 0) {
+                 await new Promise(r => setTimeout(r, delay));
+            }
+        }
+        
+        const totalElapsed = (Date.now() - startTime) / 1000;
+        
+        // Kalan Süre (ETA) Hesabı
+        // Artık cümle bazlı hesaplayabiliriz ki bu çok daha doğru olur.
         let eta = 0;
-        if (currentProgressFrac > 0.01) {
-          const totalEstimatedTime = elapsed / currentProgressFrac;
-          eta = Math.max(0, Math.round(totalEstimatedTime - elapsed));
+        if (totalBookSentences > 0 && accumulatedSentences > 10) {
+            const avgTimePerSentence = totalElapsed / (accumulatedSentences - (resumeFrom?.totalProcessedSentences || 0));
+            const remainingSentences = totalBookSentences - accumulatedSentences;
+            eta = Math.max(0, Math.round(remainingSentences * avgTimePerSentence));
+        } else {
+             // Fallback ETA
+             const currentProgressFrac = (zipIdx + (nodeIdx / nodes.length)) / processList.length;
+             if(currentProgressFrac > 0.01) {
+                const totalTime = totalElapsed / currentProgressFrac;
+                eta = Math.max(0, Math.round(totalTime - totalElapsed));
+             }
         }
 
         triggerProgress({
-            currentPercent: Math.round(currentProgressFrac * 100),
-            wordsPerSecond: totalWords / elapsed,
+            wordsPerSecond: totalWords / totalElapsed,
             etaSeconds: eta,
             lastZipPathIndex: zipIdx,
             lastNodeIndex: nodeIdx
