@@ -20,6 +20,7 @@ export interface TranslationSettings {
   targetLanguage: string;
   modelId?: string;
   uiLang: UILanguage;
+  hasPaidKey?: boolean;
 }
 
 export interface ResumeInfo {
@@ -28,6 +29,7 @@ export interface ResumeInfo {
   nodeIndex: number;
   translatedNodes: Record<string, string[]>;
   settings: TranslationSettings;
+  totalProcessedSentences?: number; // Kaldığı yerden devam ederken cümle sayısını korumak için
 }
 
 export interface HistoryItem {
@@ -50,6 +52,7 @@ export interface BookStats {
   estimatedChunks: number;
   estimatedDurationFree: number; // Dakika cinsinden (Worst case)
   estimatedDurationPro: number; // Dakika cinsinden (Best case)
+  fileSentenceCounts?: number[]; // Her dosyanın cümle sayısı (Progress bar hassasiyeti için)
 }
 
 export interface BookStrategy {
