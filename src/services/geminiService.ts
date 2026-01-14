@@ -70,20 +70,14 @@ export class GeminiTranslator {
     const cleanOrig = original.replace(/<[^>]*>/g, ' ').trim();
     const cleanTrans = validationTrans.replace(/<[^>]*>/g, ' ').trim();
     
-    const origWithoutProtected = original
-        .replace(/<table[\s\S]*?<\/table>/gi, '')
-        .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, '')
-        .replace(/<img[^>]*>/gi, '')
-        .replace(/<svg[\s\S]*?<\/svg>/gi, '')
-        .replace(/<figure[\s\S]*?<\/figure>/gi, '')
-        .replace(/<[^>]*>/g, ' ').trim();
-
-    if (origWithoutProtected.length > 5 && (!cleanTrans || cleanTrans.length === 0)) {
-         if (/^\d+$/.test(origWithoutProtected)) return { suspicious: false };
+    // 1. Boş çıktı kontrolü
+    if (cleanOrig.length > 5 && (!cleanTrans || cleanTrans.length === 0)) {
+         if (/^\d+$/.test(cleanOrig)) return { suspicious: false };
          return { suspicious: true, reason: "EMPTY_OUTPUT_AFTER_PROTECTION" };
     }
     
-    if (origWithoutProtected.length > 50 && cleanTrans.length < (origWithoutProtected.length * 0.1)) {
+    // 2. Aşırı kısa çıktı kontrolü
+    if (cleanOrig.length > 50 && cleanTrans.length < (cleanOrig.length * 0.1)) {
         return { suspicious: true, reason: "TOO_SHORT" };
     }
 
@@ -92,7 +86,10 @@ export class GeminiTranslator {
         /^\d+\.?\s+[A-Z]/.test(cleanOrig) ||
         (cleanOrig.split(' ').filter(w => /^[A-Z]/.test(w)).length / cleanOrig.split(' ').length > 0.6);
 
-    if (!isReferenceOrTOC && origWithoutProtected.length > 30 && origWithoutProtected.toLowerCase() === cleanTrans.toLowerCase()) {
+    // 3. DOĞRULAMA MEKANİZMASI: Birebir Kopya Kontrolü (Verbatim Copy)
+    // Eğer metin bir referans, sayı veya çok kısaysa (<20 karakter) aynı kalması normaldir.
+    // Ancak uzun bir cümle aynı kaldıysa, model çeviri yapmamış demektir.
+    if (!isReferenceOrTOC && cleanOrig.length > 20 && cleanOrig.toLowerCase() === cleanTrans.toLowerCase()) {
          return { suspicious: true, reason: "VERBATIM_COPY" };
     }
 
@@ -108,7 +105,7 @@ export class GeminiTranslator {
         let markerCount = 0;
         englishMarkers.forEach(m => { if (lowerTrans.includes(m)) markerCount++; });
         
-        if (markerCount > 3 && origWithoutProtected.length > 80) return { suspicious: true, reason: "SOURCE_LANGUAGE_LEAK" };
+        if (markerCount > 3 && cleanOrig.length > 80) return { suspicious: true, reason: "SOURCE_LANGUAGE_LEAK" };
     }
 
     return { suspicious: false };
@@ -130,31 +127,17 @@ export class GeminiTranslator {
     const prompt = getAnalysisPrompt(this.sourceLanguage, this.targetLanguage, metadata, uiLang, feedback);
 
     try {
-      // Eğer placeholder key ise boşuna API'ye gitme, direkt fallback dön.
       if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("PLACEHOLDER_KEY");
 
       const response = await ai.models.generateContent({
         model: this.modelName, 
         contents: prompt,
         config: { 
+          // Flash Lite için search tool kapatıldı, şema basitleştirildi.
           tools: this.modelName.includes('pro') ? [{googleSearch: {}}] : undefined,
           responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              genre_en: { type: Type.STRING },
-              tone_en: { type: Type.STRING },
-              author_style_en: { type: Type.STRING },
-              strategy_en: { type: Type.STRING },
-              genre_translated: { type: Type.STRING },
-              tone_translated: { type: Type.STRING },
-              author_style_translated: { type: Type.STRING },
-              strategy_translated: { type: Type.STRING },
-              literary_fidelity_note: { type: Type.STRING },
-              detected_creativity_level: { type: Type.NUMBER }
-            },
-            required: ["genre_en", "tone_en", "author_style_en", "strategy_en", "genre_translated", "tone_translated", "author_style_translated", "strategy_translated", "literary_fidelity_note", "detected_creativity_level"]
-          }
+          // Şema Lite modellerinde bazen sorun çıkarıyor, prompt içinde zorladık ama burada da kalsın.
+          // Eğer model Lite ise bazen schema olmadan text almak daha güvenlidir, ancak tutarlılık için şimdilik bırakıyoruz.
         }
       });
 
@@ -168,11 +151,7 @@ export class GeminiTranslator {
       jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(jsonStr);
     } catch (err: any) {
-      // KESİNLİKLE YÖNLENDİRME YAPMA.
-      // Analiz başarısız olursa (kota, key hatası, sunucu hatası farketmez)
-      // Varsayılan bir strateji ile devam et ki kullanıcı arayüzü kilitlenmesin.
       console.warn("Analysis failed (Key missing, Quota exceeded, or Network error). Using fallback strategy.", err);
-      
       return { 
         genre_en: "Literature", tone_en: "Narrative", author_style_en: "Fluid", strategy_en: "Fidelity",
         genre_translated: "Edebiyat", tone_translated: "Anlatı", author_style_translated: "Akıcı", strategy_translated: "Sadakat",
@@ -201,19 +180,22 @@ export class GeminiTranslator {
     
     let lastError: any = null;
     let attempt = 0;
-    const maxRetries = 2; 
+    const maxRetries = 2; // Toplam 3 deneme
 
     while (attempt <= maxRetries) {
         try {
-            // Eğer placeholder key ise direkt hata fırlat
             if (apiKey === "AI_BROWSER_PLACEHOLDER_KEY") throw new Error("API_KEY_INVALID");
 
             let currentTemp = this.temperature;
             let repairLevel = 0; 
 
+            // Retry mekanizması: Eğer daha önce başarısız olduysa repairLevel artar
+            // 0: Normal
+            // 1: Strict (Daha az yaratıcı, tekrarı engelle)
+            // 2: Literal (Kelime kelime çevir - Verbatim Copy durumunda buraya düşer)
             if (forceRetryMode || attempt > 0) {
                 repairLevel = attempt === 0 ? 1 : attempt; 
-                currentTemp = repairLevel === 2 ? 0.0 : 0.15; 
+                currentTemp = repairLevel === 2 ? 0.1 : 0.2; 
             }
 
             const sysInstruction = getSystemInstruction(
@@ -241,9 +223,11 @@ export class GeminiTranslator {
             let translated = (response.text || "").trim();
             translated = translated.replace(/^```(html|xhtml|xml)?\n?/i, '').replace(/\n?```$/i, '').trim();
 
+            // DOĞRULAMA MEKANİZMASI
             const check = this.isTranslationSuspicious(trimmed, translated);
             if (check.suspicious) {
                 console.warn(`Attempt ${attempt} failed validation: ${check.reason}`);
+                // Hata fırlatarak catch bloğuna düşür ve bir sonraki denemede repairLevel'i artır
                 throw new Error(`VALIDATION_FAILED_${check.reason}`);
             }
 
@@ -256,21 +240,24 @@ export class GeminiTranslator {
             lastError = error;
             const errMsg = error.message || "";
             
-            if (errMsg === "API_KEY_INVALID") throw error; // Loop kırma
-            
-            // Kota hatası (429) durumunda "API_QUOTA_EXCEEDED" fırlat.
+            if (errMsg === "API_KEY_INVALID") throw error;
             if (errMsg.includes('429')) throw new Error("API_QUOTA_EXCEEDED");
-            
-            // 400 Invalid Key hatası
             if (errMsg.includes('API key') && errMsg.includes('not valid')) {
                  throw new Error("API_KEY_INVALID");
             }
             
+            // Eğer Verbatim Copy ise ve son deneme değilse, beklemeden hemen tekrar dene (farklı prompt ile)
+            if (errMsg.includes('VERBATIM_COPY') && attempt < maxRetries) {
+                 attempt++;
+                 continue; 
+            }
+            
             attempt++;
-            if (attempt <= maxRetries) await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+            if (attempt <= maxRetries) await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
     }
     
+    // Tüm denemeler başarısız olduysa
     console.warn("All translation attempts failed. Using original text as fallback.", trimmed);
     return trimmed; 
   }
