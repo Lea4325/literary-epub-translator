@@ -141,17 +141,26 @@ export default function App() {
     }
 
     // --- KEY RESTORE LOGIC ---
+    let foundKey = false;
     const localKey = localStorage.getItem(STORAGE_KEY_API);
     if (localKey) {
         setManualKey(localKey);
         setHasPaidKey(true);
+        foundKey = true;
     } else {
         try {
             // @ts-ignore
             if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
                 setHasPaidKey(true);
+                foundKey = true;
             }
         } catch(e) {}
+    }
+
+    // ZORUNLU MODEL SIFIRLAMA
+    // Eğer geçerli bir anahtar bulunamadıysa, model ayarını zorla Free Tier'a çek.
+    if (!foundKey) {
+        setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
     }
     
     setIsInitializing(false);
@@ -196,6 +205,15 @@ export default function App() {
     } finally { setIsVerifying(false); }
   };
 
+  const handleClearKey = () => {
+    localStorage.removeItem(STORAGE_KEY_API);
+    (window as any).manualApiKey = null;
+    setManualKey('');
+    setHasPaidKey(false);
+    // Anahtar silinince otomatik olarak ücretsiz modele düş
+    setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
+  };
+
   const handleConnectAiStudio = async () => {
     if ((window as any).aistudio) {
       try {
@@ -214,17 +232,14 @@ export default function App() {
   const handleAnalyzeAndStats = async () => {
     if (!file) return;
 
-    let effectiveModelId = settings.modelId;
-    const currentModel = AI_MODELS.find(m => m.id === effectiveModelId);
-
     // KOTA VE MODEL KONTROLÜ (AUTO-DOWNGRADE)
-    // Eğer kullanıcı kilitli bir model seçmişse (ör: Gemini 3 Pro) ama anahtarı yoksa,
-    // hata verip durmak yerine otomatik olarak ÜCRETSİZ modele (Flash Lite) geç ve devam et.
-    if (currentModel?.locked && !hasPaidKey) {
+    // Bu kısım kritik: Eğer hasPaidKey false ise, state ne derse desin efektif model
+    // olarak her zaman gemini-flash-lite-latest kullanılmalı.
+    let effectiveModelId = settings.modelId;
+    if (!hasPaidKey) {
          effectiveModelId = 'gemini-flash-lite-latest';
+         // State'i de güncelle ki UI tutarlı olsun
          setSettings(prev => ({ ...prev, modelId: effectiveModelId }));
-         // Kullanıcıya sessizce geçiş yapıldığını hissettirmeden devam et
-         // veya istenirse bir toast mesajı eklenebilir.
     }
 
     setIsAnalyzing(true);
@@ -290,10 +305,7 @@ export default function App() {
 
     // START TUŞUNA BASILDIĞINDA DA MODEL KONTROLÜ YAP
     let effectiveModelId = settings.modelId;
-    const currentModel = AI_MODELS.find(m => m.id === effectiveModelId);
-    
-    // Eğer resume ediliyorsa ayarlardaki modelden devam et, ama kilitliyse ve key yoksa düşür
-    if (currentModel?.locked && !hasPaidKey) {
+    if (!hasPaidKey) {
         effectiveModelId = 'gemini-flash-lite-latest';
         setSettings(prev => ({ ...prev, modelId: effectiveModelId }));
     }
@@ -415,6 +427,7 @@ export default function App() {
         isVerifying={isVerifying}
         onVerifyKey={() => verifyApiKey()}
         onConnectAiStudio={handleConnectAiStudio}
+        onClearKey={handleClearKey}
       />
 
       <Navigation 
