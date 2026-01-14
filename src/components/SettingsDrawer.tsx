@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Settings, X, LayoutDashboard, Sun, Moon, Globe, Key, Lock, Unlock, Zap, 
-  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, ExternalLink
+  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, ExternalLink, Trash2
 } from 'lucide-react';
 import { TranslationSettings, AI_MODELS, UILanguage } from '../design';
 
@@ -21,6 +21,7 @@ interface SettingsDrawerProps {
   isVerifying: boolean;
   onVerifyKey: () => void;
   onConnectAiStudio: () => void;
+  onClearKey: () => void;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -38,7 +39,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   setManualKey,
   isVerifying,
   onVerifyKey,
-  onConnectAiStudio
+  onConnectAiStudio,
+  onClearKey
 }) => {
   const [showKey, setShowKey] = useState(false);
 
@@ -128,13 +130,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                 </div>
-                <button 
-                  onClick={onVerifyKey} 
-                  disabled={isVerifying || !manualKey} 
-                  className="w-full py-4 bg-slate-900 dark:bg-indigo-600/90 hover:bg-black dark:hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg"
-                >
-                  {isVerifying ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} {isVerifying ? t.checkKey : t.verifyBtn}
-                </button>
+                <div className="flex gap-2">
+                    <button 
+                    onClick={onVerifyKey} 
+                    disabled={isVerifying || !manualKey} 
+                    className="flex-1 py-4 bg-slate-900 dark:bg-indigo-600/90 hover:bg-black dark:hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg"
+                    >
+                    {isVerifying ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} {isVerifying ? t.checkKey : t.verifyBtn}
+                    </button>
+                    {(hasPaidKey || manualKey) && (
+                        <button 
+                          onClick={onClearKey}
+                          className="px-4 py-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-2xl transition-all"
+                          title={t.removeKey}
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                </div>
               </div>
             </div>
           </div>
