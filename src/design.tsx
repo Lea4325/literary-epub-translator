@@ -66,6 +66,7 @@ export interface BookStrategy {
   strategy_translated: string;
   literary_fidelity_note: string;
   detected_creativity_level: number;
+  isFallback?: boolean; // Kota aşımı nedeniyle varsayılan strateji mi kullanıldı?
 }
 
 export interface LogEntry {
