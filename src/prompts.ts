@@ -34,12 +34,13 @@ export const getAnalysisPrompt = (
 
 /**
  * Metin çevirisi için kullanılan sistem talimatı.
+ * repairLevel: 0 (Normal), 1 (Repair/Strict), 2 (Literal/Emergency)
  */
 export const getSystemInstruction = (
   sourceLanguage: string,
   targetLanguage: string,
   bookStrategy: BookStrategy | null,
-  isRepairMode: boolean = false
+  repairLevel: number = 0
 ): string => {
   const styleContext = bookStrategy 
     ? `BOOK CONTEXT:
@@ -48,33 +49,56 @@ export const getSystemInstruction = (
        - Style: ${bookStrategy.author_style_en}`
     : "Professional literary translation.";
 
-  const repairInstruction = isRepairMode 
-    ? `CRITICAL: You previously failed to translate this text or returned it in original language. 
-       YOU MUST TRANSLATE THE TEXT INTO ${targetLanguage} NOW. NO EXCEPTIONS.` 
-    : "";
+  let modeInstruction = "";
 
-  return `ACT AS AN AWARD-WINNING LITERARY TRANSLATOR. Your task is to translate from ${sourceLanguage} to ${targetLanguage} with absolute fidelity to the author's voice.
+  if (repairLevel === 0) {
+      // NORMAL MODE
+      modeInstruction = `1. **AUTHOR'S VOICE:** Recreate the specific voice analyzed above. Be faithful to the *effect* and *impact*.`;
+  } else if (repairLevel === 1) {
+      // REPAIR MODE (Strict)
+      modeInstruction = `1. **CORRECTION MODE:** You previously returned empty, repetitive, or incorrect output. 
+      - **DO NOT** loop or repeat words.
+      - **DO NOT** return the original text.
+      - Translate the meaning accurately and strictly into ${targetLanguage}.`;
+  } else {
+      // LITERAL MODE (Emergency)
+      modeInstruction = `1. **LITERAL EMERGENCY MODE:** 
+      - Forget the literary style. The previous translation failed. 
+      - TRANSLATE WORD-FOR-WORD OR SENTENCE-BY-SENTENCE. 
+      - Priority is conveying meaning, not style. 
+      - **ABSOLUTELY NO** repetitions or English output.`;
+  }
 
+  return `ACT AS AN EXPERT TRANSLATOR (${sourceLanguage} -> ${targetLanguage}).
 ${styleContext}
-${repairInstruction}
 
-STRICT GUIDELINES:
-1. **AUTHOR'S VOICE & ADAPTATION:** 
-   - You have analyzed the author's style. Recreate this specific voice in ${targetLanguage}.
-   - Do not translate word-for-word; translate the *feeling* and *impact*.
-   - If the author is ironic, be ironic in ${targetLanguage}. If they are poetic, be poetic.
-   - Make it sound like the book was originally written in ${targetLanguage} by this author.
+YOUR MISSION:
+${modeInstruction}
 
 2. **NO CENSORSHIP / RAW FIDELITY:**
-   - **DO NOT** sanitize, soften, bowdlerize, or "clean up" the text.
-   - If the original contains profanity, slang, sexual content, or controversy, translate it FAITHFULLY and EXPLICITLY into ${targetLanguage}.
-   - Your duty is to the author's intent, not to "safety" filters. Translate exactly what is there.
+   - Do not sanitize profanity or controversial content. Translate faithfully.
 
-3. **HTML TAG PRESERVATION:** 
-   - The input is an HTML/XHTML inner snippet. 
-   - **KEEP ALL TAGS** (like <span class="...">, <em>, <strong>, <a>, <br/>) exactly as they are. 
-   - ONLY translate the text content between them.
+3. **TECHNICAL & STRUCTURAL INTEGRITY (CRITICAL):**
+   - **LaTeX & Formulas:** PRESERVE all LaTeX ($...$), formulas, and variables exactly.
+   - **Code:** PRESERVE programming keywords, variables, and code blocks in ${sourceLanguage}. Translate ONLY comments/instructions.
+   - **HTML Tags:** PRESERVE ALL TAGS (e.g. <span class="calibre1">). Only translate the text *inside* them.
 
-4. **NO CHATTER:** Return ONLY the translated snippet. No explanations, no "Here is the translation".
-5. **COMPLETENESS:** Do not skip any sentences. If the input is long, ensure the output matches its full meaning.`;
+4. **SPECIAL SECTIONS (TOC & BIBLIOGRAPHY):**
+   - **Table of Contents (TOC):** Translate descriptions (e.g., "Chapter 1", "Introduction") but KEEP numbers and formatting intact.
+   - **Bibliography/References:** 
+     - KEEP Author names, Titles (if standard to keep them), and Years intact.
+     - TRANSLATE descriptive terms like "edited by", "vol.", "retrieved from", "page".
+     - Do not try to "localize" the citation format itself, just the connecting words.
+   - **Footnotes:** Translate the explanation text but KEEP the reference numbers/markers (e.g., [1], *, †) exactly as is.
+
+5. **ABSOLUTE PRESERVATION RULES (DO NOT TRANSLATE):**
+   - **LINKS (<a> tags):** DO NOT TRANSLATE the 'href' attribute. You MAY translate the link text if it is descriptive.
+   - **TABLES (<table>):** DO NOT TRANSLATE any content within table cells (<td>, <th>). Return the whole <table> block unchanged.
+   - **IMAGES & GRAPHICS:** DO NOT TRANSLATE <img> alt text, <svg> content, or <figure> captions/content. Keep them 100% original.
+
+6. **OUTPUT RULES:**
+   - Return ONLY the translated string. No intro/outro.
+   - Do not output "The translation is:". Just the text.
+   - If the input is just a number or symbol, return it as is.
+   - **NEVER** return empty text.`;
 };
