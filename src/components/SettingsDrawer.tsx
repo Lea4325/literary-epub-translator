@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Settings, X, LayoutDashboard, Sun, Moon, Globe, Key, Lock, Unlock, Zap, 
-  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, ExternalLink, Trash2
+  Eye, EyeOff, Loader2, ShieldCheck, Sliders, Check, ExternalLink, Trash2, Save
 } from 'lucide-react';
 import { TranslationSettings, AI_MODELS, UILanguage } from '../design';
 
@@ -51,6 +51,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     if (modelId === 'gemini-3-pro-preview') return t.modelDescExpert || 'Expert';
     return '';
   };
+
+  const hasKeySaved = hasPaidKey || (manualKey && manualKey.length > 10);
 
   return (
     <aside className={`fixed top-0 right-0 h-full w-80 bg-white dark:bg-slate-900 z-[80] shadow-2xl transition-transform duration-300 transform border-l border-slate-200 dark:border-slate-800 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -124,19 +126,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       value={manualKey} 
                       onChange={(e) => setManualKey(e.target.value)} 
                       placeholder={t.manualKeyPlaceholder} 
-                      className="w-full bg-slate-50 dark:bg-slate-900/80 border-2 border-slate-100 dark:border-slate-700 rounded-2xl py-4 pl-4 pr-12 text-[12px] font-mono outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner text-slate-700 dark:text-slate-200" 
+                      className={`w-full bg-slate-50 dark:bg-slate-900/80 border-2 rounded-2xl py-4 pl-4 pr-12 text-[12px] font-mono outline-none focus:ring-4 transition-all shadow-inner ${hasKeySaved ? 'border-green-500/30 focus:border-green-500 focus:ring-green-500/10 text-green-700 dark:text-green-300' : 'border-slate-100 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500/10 text-slate-700 dark:text-slate-200'}`} 
                     />
                     <button onClick={() => setShowKey(!showKey)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-500 transition-colors p-1.5">
                       {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
+                    {hasKeySaved && <div className="absolute right-10 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none"><Check size={14} /></div>}
                 </div>
                 <div className="flex gap-2">
                     <button 
                     onClick={onVerifyKey} 
                     disabled={isVerifying || !manualKey} 
-                    className="flex-1 py-4 bg-slate-900 dark:bg-indigo-600/90 hover:bg-black dark:hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg"
+                    className={`flex-1 py-4 text-white rounded-2xl font-black text-[11px] uppercase flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-40 transition-all shadow-lg ${hasKeySaved ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-900 dark:bg-indigo-600/90 hover:bg-black dark:hover:bg-indigo-500'}`}
                     >
-                    {isVerifying ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />} {isVerifying ? t.checkKey : t.verifyBtn}
+                    {isVerifying ? <Loader2 size={16} className="animate-spin" /> : (hasKeySaved ? <Save size={16} /> : <ShieldCheck size={16} />)} {isVerifying ? t.checkKey : (hasKeySaved ? "SAVED" : t.verifyBtn)}
                     </button>
                     {(hasPaidKey || manualKey) && (
                         <button 
