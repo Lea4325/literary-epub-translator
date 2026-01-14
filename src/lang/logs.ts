@@ -13,7 +13,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Boş veya hatalı çeviri tespit edildi, onarılıyor...", 
     repairFailed: "Onarım başarısız, orijinal metin korundu.",
     verifying: "Çeviri bütünlüğü doğrulanıyor...",
-    preComputed: "Önceden hesaplanmış analiz stratejisi kullanılıyor."
+    preComputed: "Önceden hesaplanmış analiz stratejisi kullanılıyor.",
+    freeTierActive: "Ücretsiz Kota Aktif: Hız sınırlaması uygulanıyor (15 RPM)."
   },
   en: { 
     analyzing: "Analyzing...", 
@@ -27,7 +28,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Empty or invalid translation detected, repairing...", 
     repairFailed: "Repair failed, original text preserved.",
     verifying: "Verifying integrity...",
-    preComputed: "Using pre-computed analysis strategy."
+    preComputed: "Using pre-computed analysis strategy.",
+    freeTierActive: "Free Tier Active: Throttling applied (15 RPM)."
   },
   fr: { 
     analyzing: "Analyse en cours...", 
@@ -41,7 +43,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Traduction vide ou invalide détectée, réparation...", 
     repairFailed: "Réparation échouée, texte original conservé.",
     verifying: "Vérification de l'intégrité...",
-    preComputed: "Utilisation de la stratégie d'analyse pré-calculée."
+    preComputed: "Utilisation de la stratégie d'analyse pré-calculée.",
+    freeTierActive: "Mode Gratuit : Limitation de vitesse (15 RPM)."
   },
   de: { 
     analyzing: "Analysieren...", 
@@ -55,7 +58,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Leere oder ungültige Übersetzung erkannt, repariere...", 
     repairFailed: "Reparatur fehlgeschlagen, Originaltext beibehalten.",
     verifying: "Integrität wird überprüft...",
-    preComputed: "Verwendung der vorberechneten Analysestrategie."
+    preComputed: "Verwendung der vorberechneten Analysestrategie.",
+    freeTierActive: "Kostenloser Modus: Geschwindigkeit begrenzt (15 RPM)."
   },
   es: { 
     analyzing: "Analizando...", 
@@ -69,7 +73,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Traducción vacía o inválida detectada, reparando...", 
     repairFailed: "Reparación fallida, texto original conservado.",
     verifying: "Verificando integridad...",
-    preComputed: "Usando estrategia de análisis precalculada."
+    preComputed: "Usando estrategia de análisis precalculada.",
+    freeTierActive: "Modo Gratuito: Limitación de velocidad (15 RPM)."
   },
   it: { 
     analyzing: "Analisi in corso...", 
@@ -83,7 +88,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Traduzione vuota o non valida rilevata, riparazione...", 
     repairFailed: "Riparazione fallita, testo originale conservato.",
     verifying: "Verifica integrità...",
-    preComputed: "Utilizzo della strategia di analisi pre-calcolata."
+    preComputed: "Utilizzo della strategia di analisi pre-calcolata.",
+    freeTierActive: "Modalità Gratuita: Limitazione velocità (15 RPM)."
   },
   ru: { 
     analyzing: "Анализ...", 
@@ -97,7 +103,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Обнаружен пустой или неверный перевод, исправление...", 
     repairFailed: "Исправление не удалось, исходный текст сохранен.",
     verifying: "Проверка целостности...",
-    preComputed: "Используется предварительно вычисленная стратегия."
+    preComputed: "Используется предварительно вычисленная стратегия.",
+    freeTierActive: "Бесплатный режим: Ограничение скорости (15 RPM)."
   },
   zh: { 
     analyzing: "正在分析...", 
@@ -111,7 +118,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "检测到空或无效翻译，正在修复...", 
     repairFailed: "修复失败，保留原文。",
     verifying: "正在验证完整性...",
-    preComputed: "使用预先计算的分析策略。"
+    preComputed: "使用预先计算的分析策略。",
+    freeTierActive: "免费模式：速度限制 (15 RPM)。"
   },
   ja: { 
     analyzing: "分析中...", 
@@ -125,7 +133,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "空または無効な翻訳を検出、修復中...", 
     repairFailed: "修復に失敗しました。原文を保持します。",
     verifying: "整合性を確認中...",
-    preComputed: "事前計算された分析戦略を使用しています。"
+    preComputed: "事前計算された分析戦略を使用しています。",
+    freeTierActive: "無料モード: 速度制限中 (15 RPM)。"
   },
   ko: { 
     analyzing: "분석 중...", 
@@ -139,7 +148,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "비어 있거나 잘못된 번역 감지, 복구 중...", 
     repairFailed: "복구 실패, 원문 유지.",
     verifying: "무결성 확인 중...",
-    preComputed: "사전 계산된 분석 전략을 사용 중입니다."
+    preComputed: "사전 계산된 분석 전략을 사용 중입니다.",
+    freeTierActive: "무료 모드: 속도 제한 중 (15 RPM)."
   },
   ar: { 
     analyzing: "جارٍ التحليل...", 
@@ -153,7 +163,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "تم اكتشاف ترجمة فارغة أو غير صالحة، جارٍ الإصلاح...", 
     repairFailed: "فشل الإصلاح، تم الاحتفاظ بالنص الأصلي.",
     verifying: "التحقق من السلامة...",
-    preComputed: "استخدام استراتيجية التحليل المحسوبة مسبقًا."
+    preComputed: "استخدام استراتيجية التحليل المحسوبة مسبقًا.",
+    freeTierActive: "الوضع المجاني: تقييد السرعة (15 RPM)."
   },
   pt: { 
     analyzing: "Analisando...", 
@@ -167,7 +178,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Tradução vazia ou inválida detectada, reparando...", 
     repairFailed: "Reparo falhou, texto original mantido.",
     verifying: "Verificando integridade...",
-    preComputed: "Usando estratégia de análise pré-calculada."
+    preComputed: "Usando estratégia de análise pré-calculada.",
+    freeTierActive: "Modo Grátis: Velocidade limitada (15 RPM)."
   },
   nl: { 
     analyzing: "Analyseren...", 
@@ -181,7 +193,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Lege of ongeldige vertaling gedetecteerd, repareren...", 
     repairFailed: "Reparatie mislukt, originele tekst behouden.",
     verifying: "Integriteit verifiëren...",
-    preComputed: "Gebruik van vooraf berekende analysestrategie."
+    preComputed: "Gebruik van vooraf berekende analysestrategie.",
+    freeTierActive: "Gratis modus: Snelheid beperkt (15 RPM)."
   },
   pl: { 
     analyzing: "Analizowanie...", 
@@ -195,7 +208,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Wykryto puste lub nieprawidłowe tłumaczenie, naprawianie...", 
     repairFailed: "Naprawa nie powiodła się, zachowano tekst oryginalny.",
     verifying: "Weryfikacja integralności...",
-    preComputed: "Używanie wstępnie obliczonej strategii analizy."
+    preComputed: "Używanie wstępnie obliczonej strategii analizy.",
+    freeTierActive: "Tryb darmowy: Ograniczenie prędkości (15 RPM)."
   },
   hi: { 
     analyzing: "विश्लेषण कर रहा है...", 
@@ -209,7 +223,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "खाली या अमान्य अनुवाद का पता चला, मरम्मत...", 
     repairFailed: "मरम्मत विफल, मूल पाठ सुरक्षित।",
     verifying: "अखंडता की पुष्टि...",
-    preComputed: "पूर्व-गणना विश्लेषण रणनीति का उपयोग करना।"
+    preComputed: "पूर्व-गणना विश्लेषण रणनीति का उपयोग करना।",
+    freeTierActive: "निःशुल्क मोड: गति सीमा सक्रिय (15 RPM)।"
   },
   vi: { 
     analyzing: "Đang phân tích...", 
@@ -223,7 +238,8 @@ export const STRINGS_LOGS: Record<string, any> = {
     repairing: "Phát hiện bản dịch trống hoặc không hợp lệ, đang sửa...", 
     repairFailed: "Sửa thất bại, văn bản gốc được giữ lại.",
     verifying: "Đang xác minh tính toàn vẹn...",
-    preComputed: "Sử dụng chiến lược phân tích đã tính toán."
+    preComputed: "Sử dụng chiến lược phân tích đã tính toán.",
+    freeTierActive: "Chế độ miễn phí: Giới hạn tốc độ (15 RPM)."
   }
 };
 
