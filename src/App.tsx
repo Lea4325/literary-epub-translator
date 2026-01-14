@@ -145,6 +145,8 @@ export default function App() {
     const localKey = localStorage.getItem(STORAGE_KEY_API);
     if (localKey) {
         setManualKey(localKey);
+        // Varsayılan olarak key varsa Paid kabul et (verify ile kontrol edilecek)
+        // Ama başlangıçta hata vermemesi için true yapıyoruz.
         setHasPaidKey(true);
         foundKey = true;
     } else {
@@ -157,11 +159,10 @@ export default function App() {
         } catch(e) {}
     }
 
-    // ZORUNLU MODEL SIFIRLAMA
-    // Eğer geçerli bir anahtar bulunamadıysa, model ayarını zorla Free Tier'a çek.
-    if (!foundKey) {
-        setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
-    }
+    // BAŞLANGIÇTA ZORLA ÜCRETSİZ MODELİ SEÇ
+    // Anahtar olsun veya olmasın, güvenli taraf 'gemini-flash-lite-latest'.
+    // Kullanıcı Pro model istiyorsa kendisi seçmeli.
+    setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
     
     setIsInitializing(false);
   };
@@ -181,27 +182,26 @@ export default function App() {
     const finalKey = keyToTest || envKey;
 
     if (!finalKey) { setIsVerifying(false); return; }
+    
+    // UI'da anahtarı hemen kaydet ki analiz sırasında kullanılabilsin
+    (window as any).manualApiKey = finalKey;
+    localStorage.setItem(STORAGE_KEY_API, finalKey);
+
     try {
       const ai = new GoogleGenAI({ apiKey: finalKey });
       const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: 'ping' });
       if (response.text) {
         setHasPaidKey(true);
-        (window as any).manualApiKey = finalKey;
-        localStorage.setItem(STORAGE_KEY_API, finalKey);
-        setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
       }
     } catch (e: any) {
-      // ÖNEMLİ: Eğer hata 429 ise, anahtar geçerlidir ama kota doludur. 
-      // Yine de anahtarı geçerli saymalıyız ki kullanıcı devam edebilsin.
-      if (e.message?.includes('429')) {
-         setHasPaidKey(false); // Ücretsiz mod olarak işaretle (genelde 429 ücretsizlerde olur)
-         (window as any).manualApiKey = finalKey;
-         localStorage.setItem(STORAGE_KEY_API, finalKey);
-         setSettings(prev => ({ ...prev, modelId: 'gemini-flash-lite-latest' }));
-      } else {
-         setHasPaidKey(false);
-         setError({ title: t.error, message: t.verifyingError });
-      }
+      console.warn("API Verification Warning:", e);
+      // Hata alsa bile (429, 500 vb.) anahtar formatı doğruysa kaydet.
+      // Sadece 400 (Invalid Key) durumunda anahtarı reddetmek mantıklı olurdu ama
+      // ücretsiz modda kullanıcıyı engellememek için "Free/Limited" olarak işaretliyoruz.
+      setHasPaidKey(false); 
+      
+      // Anahtarı silmiyoruz! Kullanıcı doğru girdiğini düşünüyorsa devam edebilmeli.
+      // Sadece 'hasPaidKey' false olduğu için Pro modellere geçemeyecek.
     } finally { setIsVerifying(false); }
   };
 
@@ -233,12 +233,9 @@ export default function App() {
     if (!file) return;
 
     // KOTA VE MODEL KONTROLÜ (AUTO-DOWNGRADE)
-    // Bu kısım kritik: Eğer hasPaidKey false ise, state ne derse desin efektif model
-    // olarak her zaman gemini-flash-lite-latest kullanılmalı.
     let effectiveModelId = settings.modelId;
     if (!hasPaidKey) {
          effectiveModelId = 'gemini-flash-lite-latest';
-         // State'i de güncelle ki UI tutarlı olsun
          setSettings(prev => ({ ...prev, modelId: effectiveModelId }));
     }
 
@@ -250,6 +247,8 @@ export default function App() {
       // effectiveModelId kullanarak ayarları oluştur
       const effectiveSettings = { ...settings, modelId: effectiveModelId, uiLang, hasPaidKey };
 
+      // Analiz başarısız olsa bile istatistikler hesaplanmalı.
+      // analyzeEpubOnly artık hata fırlatmak yerine fallback döndürüyor (missing key hariç).
       const [strategy, stats] = await Promise.all([
           analyzeEpubOnly(file, effectiveSettings),
           calculateEpubStats(file, settings.targetTags, hasPaidKey)
@@ -268,9 +267,11 @@ export default function App() {
 
     } catch (err: any) {
       console.error("Analysis Error:", err);
+      // Sadece ve sadece anahtar gerçekten yoksa ayarları aç
       if (err.message === "MISSING_KEY_REDIRECT") {
           handleMissingKey();
       } else {
+          // Diğer durumlarda (Quota vb.) kullanıcıya hata göster ama akışı bozma
           setError({ title: t.error, message: err.message || "Analysis failed due to an unknown error." });
       }
     } finally {
@@ -282,7 +283,6 @@ export default function App() {
     if (!file) return;
     setIsAnalyzing(true);
     try {
-      // Yeniden analizde de mevcut geçerli model ID'sini kullan
       const strategy = await analyzeEpubOnly(file, { ...settings, uiLang, hasPaidKey }, feedback);
       setProgress(prev => ({ ...prev, strategy: strategy }));
       if (strategy && strategy.detected_creativity_level) {
@@ -316,7 +316,6 @@ export default function App() {
     
     abortControllerRef.current = new AbortController();
     try {
-      // Resume durumunda kaydedilen ayarları kullan ama güncel Key durumunu ve modeli zorla
       const effectiveSettings = isResuming && resumeData 
         ? { ...resumeData.settings, hasPaidKey, modelId: hasPaidKey ? resumeData.settings.modelId : effectiveModelId } 
         : { ...settings, modelId: effectiveModelId, uiLang, hasPaidKey };
