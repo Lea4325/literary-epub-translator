@@ -120,8 +120,8 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl flex items-center gap-3">
                                   <div className="p-1.5 bg-amber-100 dark:bg-amber-800 rounded-lg text-amber-600 dark:text-amber-400"><AlertCircle size={16}/></div>
                                   <div className="flex-1">
-                                      <p className="text-[10px] md:text-xs font-bold text-amber-700 dark:text-amber-400">Analysis Quota Exceeded</p>
-                                      <p className="text-[9px] md:text-[10px] text-amber-600/80 dark:text-amber-400/80">Using default strategy. You can still translate.</p>
+                                      <p className="text-[10px] md:text-xs font-bold text-amber-700 dark:text-amber-400">{t.analysisQuotaExceededTitle || "Analysis Quota Exceeded"}</p>
+                                      <p className="text-[9px] md:text-[10px] text-amber-600/80 dark:text-amber-400/80">{t.analysisQuotaExceededDesc || "Using default strategy. You can still translate."}</p>
                                   </div>
                               </div>
                           )}
