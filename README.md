@@ -12,8 +12,8 @@
 *Translates EPUBs while preserving literary style, author's voice, and formatting.*
 
 [Features](#-key-features) •
-[How It Works](#-how-it-works) •
-[Tech Stack](#-tech-stack)
+[How It Works](#%EF%B8%8F-how-it-works) •
+[Tech Stack](#%EF%B8%8F-tech-stack)
 
 </div>
 
