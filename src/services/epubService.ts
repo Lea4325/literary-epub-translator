@@ -111,10 +111,12 @@ export async function calculateEpubStats(file: File, targetTags: string[], hasUs
   const estimatedChunks = Math.ceil(totalChars / 500); 
 
   // Süre Hesaplaması
-  // Free: 15 RPM
-  const durationFree = Math.ceil(estimatedChunks / 15); 
+  // Free: Teorik limit 15 RPM. 
+  // Ancak 429 hataları ve bekleme süreleri (60s) ile efektif hız daha düşüktür.
+  // Güvenli çarpan: 10 RPM
+  const durationFree = Math.ceil(estimatedChunks / 10); 
   // Paid: ~30-40 RPM
-  const durationPro = Math.ceil(estimatedChunks / 30); 
+  const durationPro = Math.ceil(estimatedChunks / 35); 
 
   return {
     totalChars,
@@ -326,12 +328,13 @@ export async function processEpub(
                    node.innerHTML = original;
                 }
             } else if (err.message === "API_QUOTA_EXCEEDED" || err.message?.includes('429')) {
-              addLog(getLogStr(ui, 'quotaExceeded'), 'warning');
+              // 429 Durumu: Kullanıcıyı bilgilendir ve bekle
+              addLog(getLogStr(ui, 'quotaExceeded') || "Quota Limit! Waiting 60s...", 'warning');
               await new Promise(r => {
-                const timeout = setTimeout(r, 65000);
+                const timeout = setTimeout(r, 65000); // 65 saniye güvenli bekleme
                 signal.addEventListener('abort', () => clearTimeout(timeout));
               });
-              nodeIdx--; continue; 
+              nodeIdx--; continue; // Aynı node'u tekrar dene
             } else {
                 console.error("Critical node translation error:", err);
                 node.innerHTML = original;
