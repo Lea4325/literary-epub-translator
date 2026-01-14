@@ -6,7 +6,7 @@ export const STRINGS_UI: Record<string, any> = {
     sourceLang: "KAYNAK DİL", targetLang: "HEDEF DİL", creativity: "YARATICILIK", htmlTags: "HTML ETİKETLERİ",
     systemMonitor: "Sistem İzleyici", startBtn: "Çeviriyi Başlat", analyzeBtn: "Analiz & Hesapla", resumeBtn: "Devam Et", stopBtn: "Durdur", downloadBtn: "EPUB İNDİR",
     tokens: "TOKEN", speed: "HIZ", eta: "KALAN", processing: "İşleniyor", idle: "Hazır",
-    title: "Edebi EPUB Çevirmeni", description: "Profesyonel Edebi Çeviri Engine", settingsTitle: "AYARLAR VE KONFİGÜRASYON",
+    title: "Edebi EPUB Çevirmeni", description: "Profesyonel Edebi Çeviri Motoru", settingsTitle: "AYARLAR VE KONFİGÜRASYON",
     restoreSettings: "Geri Yükle", selectLang: "DİL SEÇİN", error: "HATA", apiStatus: "API DURUMU",
     freeMode: "ÜCRETSİZ MOD", paidMode: "PRO MOD", connectAiStudio: "AI STUDIO BAĞLAN", billingInfo: "Gelişmiş modeller için Paid Key gereklidir.",
     lockedModel: "Bağlantı Gerekli", checkKey: "Doğrulanıyor...", verifyBtn: "AKTİF ET", manualKeyLabel: "MANUEL ANAHTAR",
